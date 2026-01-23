@@ -1,0 +1,27 @@
+name: Publish package to the Maven Central Repository
+on:
+    push:
+        tags:
+            - 'v*'
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up JDK
+              uses: actions/setup-java@v4
+              with:
+                  distribution: 'temurin'
+                  java-version: '8'
+                  server-id: 'ossrh'     # 与 settings.xml 中的 server id 一致
+                  server-username: ${{ secrets.OSSRH_USERNAME }}  # user token 的 username
+                  server-password: ${{ secrets.OSSRH_PASSWORD }}  # user token 的 password
+                  gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # GPG 私钥（Base64 编码）
+                  gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}   # GPG 密钥密码
+                  cache: 'maven'
+
+            - name: Build and Deploy
+              run: |
+                  mvn deploy -P release
