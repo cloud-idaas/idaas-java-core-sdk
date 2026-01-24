@@ -14,6 +14,10 @@ public interface HttpConstants {
 
     String USER_AGENT = "User-Agent";
 
+    String LOACTION = "Location";
+
+    String REDIRECT_TO = "Redirect to: ";
+
     String X_ALIYUN_ECS_METADATA_TOKEN_TTL_SECONDS = "X-aliyun-ecs-metadata-token-ttl-seconds";
 
     String X_ALIYUN_ECS_METADATA_TOKEN = "X-aliyun-ecs-metadata-token";

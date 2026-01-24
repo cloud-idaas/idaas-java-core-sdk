@@ -7,6 +7,8 @@ import com.cloud_idaas.core.domain.constants.HttpConstants;
 import com.cloud_idaas.core.domain.constants.OAuth2Constants;
 import com.cloud_idaas.core.exception.ClientException;
 import com.cloud_idaas.core.util.JSONUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -38,7 +40,8 @@ public class OAuth2TokenUtil {
                 .contentType(ContentType.FORM)
                 .build();
         HttpResponse response = HTTP_CLIENT.send(request);
-        return JSONUtil.parseObject(response.getBody(), IDaaSTokenResponse.class);
+        IDaaSTokenResponse oidcTokenCredential = JSONUtil.parseObject(response.getBody(), IDaaSTokenResponse.class);
+        return oidcTokenCredential;
     }
 
     public static IDaaSTokenResponse getTokenWithClientSecretPost(String clientId, String clientSecret,
@@ -71,7 +74,8 @@ public class OAuth2TokenUtil {
             return null;
         }
         String responseBody = response.getBody();
-        return JSONUtil.parseObject(responseBody, IDaaSTokenResponse.class);
+        IDaaSTokenResponse oidcTokenCredential = JSONUtil.parseObject(responseBody, IDaaSTokenResponse.class);
+        return oidcTokenCredential;
     }
 
     public static IDaaSTokenResponse getTokenWithClientAssertion(String clientId, String clientAssertion,

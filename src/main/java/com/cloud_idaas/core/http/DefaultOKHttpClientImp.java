@@ -40,6 +40,7 @@ public class DefaultOKHttpClientImp implements HttpClient{
         this.okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                 .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                .followRedirects(true)
                 .build();
     }
 
@@ -105,6 +106,13 @@ public class DefaultOKHttpClientImp implements HttpClient{
             final String responseBody = Objects.requireNonNull(response.body()).string();
             if (response.isSuccessful()){
                 return new HttpResponse(responseCode, responseBody);
+            } else if (responseCode >= 300 && responseCode < 400) {
+                String redirectLocation = response.header(HttpConstants.LOACTION);
+                String redirectMessage = redirectLocation != null ? HttpConstants.REDIRECT_TO + redirectLocation : null;
+                String errorMessage = responseBody + HttpConstants.SPACE + redirectMessage;
+                LOGGER.error("Redirect Code: {}", responseCode);
+                LOGGER.error("Redirect Message: {}", errorMessage);
+                throw new ClientException(String.valueOf(responseCode), errorMessage);
             } else if (responseCode >= 400 && responseCode < 500) {
                 ErrResponse errResponse;
                 try {
