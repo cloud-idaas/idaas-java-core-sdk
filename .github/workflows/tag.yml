@@ -24,7 +24,7 @@ jobs:
 
             - name: Build and Deploy
               run: |
-                  mvn -B clean deploy -P release
+                  mvn -B clean deploy
               env:
                   SERVER_USERNAME: ${{ secrets.OSSRH_USERNAME }}
                   SERVER_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
