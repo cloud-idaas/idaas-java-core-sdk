@@ -15,13 +15,17 @@ jobs:
               with:
                   distribution: 'temurin'
                   java-version: '8'
-                  server-id: 'ossrh'     # 与 settings.xml 中的 server id 一致
-                  server-username: ${{ secrets.OSSRH_USERNAME }}  # user token 的 username
-                  server-password: ${{ secrets.OSSRH_PASSWORD }}  # user token 的 password
-                  gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # GPG 私钥（Base64 编码）
-                  gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}   # GPG 密钥密码
+                  server-id: 'central'     # matches the server id in settings.xml
+                  server-username: SERVER_USERNAME
+                  server-password: SERVER_PASSWORD
+                  gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+                  gpg-passphrase: GPG_PASSPHRASE
                   cache: 'maven'
 
             - name: Build and Deploy
               run: |
                   mvn -B clean deploy -P release
+              env:
+                  SERVER_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+                  SERVER_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+                  MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
