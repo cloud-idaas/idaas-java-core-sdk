@@ -107,7 +107,7 @@ public class DefaultOKHttpClientImp implements HttpClient{
             if (response.isSuccessful()){
                 return new HttpResponse(responseCode, responseBody);
             } else if (responseCode >= 300 && responseCode < 400) {
-                String redirectLocation = response.header(HttpConstants.LOACTION);
+                String redirectLocation = response.header(HttpConstants.LOCATION);
                 String redirectMessage = redirectLocation != null ? HttpConstants.REDIRECT_TO + redirectLocation : null;
                 String errorMessage = responseBody + HttpConstants.SPACE + redirectMessage;
                 LOGGER.error("Redirect Code: {}", responseCode);

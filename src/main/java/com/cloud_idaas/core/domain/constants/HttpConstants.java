@@ -14,7 +14,7 @@ public interface HttpConstants {
 
     String USER_AGENT = "User-Agent";
 
-    String LOACTION = "Location";
+    String LOCATION = "Location";
 
     String REDIRECT_TO = "Redirect to: ";
 

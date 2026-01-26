@@ -11,6 +11,7 @@ import com.cloud_idaas.core.http.OAuth2TokenUtil;
 import com.cloud_idaas.core.implementation.AbstractRefreshedCredentialProvider;
 import com.cloud_idaas.core.provider.OidcTokenProvider;
 import com.cloud_idaas.core.util.*;
+import org.apache.commons.lang3.exception.UncheckedInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,7 +171,7 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
         deviceCodeResponse = OAuth2TokenUtil.getDeviceCode(clientId, scope, this.deviceAuthorizationEndpoint);
 
         try {
-            // 先输出相关信息后，再帮用户手动代开
+            // Print relevant information first, then help the user open manually
             LOGGER.info("Open the verification URL in your browser: {}", deviceCodeResponse.getVerificationUriComplete());
             BrowserUtil.open(new URI(deviceCodeResponse.getVerificationUriComplete()));
 
@@ -194,7 +195,7 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
             }
             return token;
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedInterruptedException(e);
         }
 
     }

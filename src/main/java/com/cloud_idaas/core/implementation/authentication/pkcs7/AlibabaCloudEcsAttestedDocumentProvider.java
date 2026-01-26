@@ -75,7 +75,8 @@ public class AlibabaCloudEcsAttestedDocumentProvider extends AbstractRefreshedCr
     }
 
     private long getNow() {
-        // 要求时间戳为unix时间戳格式，单位为second
+
+        // Require timestamp in unix timestamp format, unit in seconds
         return System.currentTimeMillis() / 1000L;
     }
 

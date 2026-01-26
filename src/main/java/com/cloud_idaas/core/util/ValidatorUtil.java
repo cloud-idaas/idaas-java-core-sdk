@@ -11,19 +11,19 @@ import com.cloud_idaas.core.exception.ConfigException;
 
 public class ValidatorUtil {
 
-    public static <T> void validateConfigNotNull(T o, String errorCode, String errorMessage){
+    public static <T> void validateConfigNotNull(T o, String errorCode, String errorMessage) {
         if (o == null){
             throw new ConfigException(errorCode, errorMessage);
         }
     }
 
-    public static <T> void validateTokenNotNull(T o, String errorCode, String errorMessage){
+    public static <T> void validateTokenNotNull(T o, String errorCode, String errorMessage) {
         if (o == null){
             throw new CacheException(errorCode, errorMessage);
         }
     }
 
-    public static void validateBaseConfig(IDaaSClientConfig idaasClientConfig){
+    public static void validateBaseConfig(IDaaSClientConfig idaasClientConfig) {
         validateConfigNotNull(idaasClientConfig.getIdaasInstanceId(), ErrorCode.IDAAS_INSTANCE_ID_NOT_FOUND.getCode(), "IDaaS Instance ID not found.");
         validateConfigNotNull(idaasClientConfig.getClientId(), ErrorCode.CLIENT_ID_NOT_FOUND.getCode(), "Client ID not found.");
         validateConfigNotNull(idaasClientConfig.getIssuer(), ErrorCode.ISSUER_ENDPOINT_NOT_FOUND.getCode(), "Issuer Endpoint not found");
@@ -31,14 +31,14 @@ public class ValidatorUtil {
         validateConfigNotNull(idaasClientConfig.getDeveloperApiEndpoint(), ErrorCode.DEVELOPER_API_ENDPOINT_NOT_FOUND.getCode(), "Developer Api Endpoint not found.");
     }
 
-    public static void validateHumanConfig(IDaaSClientConfig idaasClientConfig){
+    public static void validateHumanConfig(IDaaSClientConfig idaasClientConfig) {
         validateConfigNotNull(idaasClientConfig.getAuthnConfiguration().getHumanAuthenticateClientId(), ErrorCode.HUMAN_AUTHENTICATE_CLIENT_ID_NOT_FOUND.getCode(),
                 "Human Authenticate Client ID not found.");
         validateConfigNotNull(idaasClientConfig.getDeviceAuthorizationEndpoint(), ErrorCode.DEVICE_AUTHORIZATION_ENDPOINT_NOT_FOUND.getCode(),
                 "Device Authorization Endpoint not found.");
     }
 
-    public static void validateClientConfig(IDaaSClientConfig idaasClientConfig){
+    public static void validateClientConfig(IDaaSClientConfig idaasClientConfig) {
         IdentityAuthenticationConfiguration authnConfiguration = idaasClientConfig.getAuthnConfiguration();
         if (authnConfiguration == null) {
             throw new ConfigException(ErrorCode.AUTHN_CONFIGURATION_NOT_FOUND.getCode(), "Authn Configuration not found.");
@@ -69,7 +69,7 @@ public class ValidatorUtil {
         }
     }
 
-    public static void validateHttpConfig(HttpConfiguration httpConfiguration){
+    public static void validateHttpConfig(HttpConfiguration httpConfiguration) {
         if (httpConfiguration != null){
             if (httpConfiguration.getConnectTimeout() < 2000 || httpConfiguration.getConnectTimeout() > 60000){
                 throw new ConfigException(ErrorCode.CONNECT_TIMEOUT_NOT_VALID.getCode(), "Connect Timeout not valid.");
@@ -80,7 +80,7 @@ public class ValidatorUtil {
         }
     }
 
-    public static void validateLocalToken(IDaaSTokenResponse localToken){
+    public static void validateLocalToken(IDaaSTokenResponse localToken) {
         if (!StringUtil.equals(localToken.getTokenType(), HttpConstants.BEARER)){
             throw new CacheException(ErrorCode.INVALID_TOKEN_TYPE.getCode(), String.format("Invalid local token type: %s.", localToken.getTokenType()));
         }

@@ -24,4 +24,4 @@ jobs:
 
             - name: Build and Deploy
               run: |
-                  mvn deploy -P release
+                  mvn -B clean deploy -P release

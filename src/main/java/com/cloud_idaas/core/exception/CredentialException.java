@@ -23,6 +23,10 @@ public class CredentialException extends RuntimeException {
         super(message, cause);
     }
 
+    public String getErrorCode() {
+        return errorCode;
+    }
+
     @Override
     public String getMessage() {
         return super.getMessage();

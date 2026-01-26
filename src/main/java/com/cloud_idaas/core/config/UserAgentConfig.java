@@ -27,7 +27,7 @@ public class UserAgentConfig implements Serializable {
         USER_AGENT_MESSAGE = String.format("%s/%s Java/%s OS(%s; %s)", "IDaaS core", coreVersion, sysProps.getProperty("java.version"), sysProps.getProperty("os.name"), sysProps.getProperty("os.arch"));
     }
 
-    private static String USER_AGENT_MESSAGE;
+    private static final String USER_AGENT_MESSAGE;
 
     public static String getUserAgentMessage() {
         return USER_AGENT_MESSAGE;

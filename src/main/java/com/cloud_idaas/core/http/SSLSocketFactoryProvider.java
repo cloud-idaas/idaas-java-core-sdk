@@ -11,7 +11,7 @@ import java.util.List;
 
 public class SSLSocketFactoryProvider {
 
-    //获取 SSLSocketFactory
+    // Get SSLSocketFactory
     public static SSLSocketFactory getSSLSocketFactory(boolean unsafeIgnoreSSLCert) {
         try {
             X509TrustManager compositeX509TrustManager = getX509TrustManager(unsafeIgnoreSSLCert);
