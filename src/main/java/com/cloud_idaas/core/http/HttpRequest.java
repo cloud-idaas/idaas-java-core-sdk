@@ -1,7 +1,5 @@
 package com.cloud_idaas.core.http;
 
-import okhttp3.FormBody;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;

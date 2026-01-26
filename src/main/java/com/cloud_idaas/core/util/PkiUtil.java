@@ -22,7 +22,8 @@ public class PkiUtil {
      *
      * @param pemContent PEM formatted private key string
      * @return PrivateKey object
-     * @throws Exception exceptions that may occur during parsing
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws InvalidKeySpecException if the key spec is invalid
      */
     public static PrivateKey parsePrivateKeyFromPem(String pemContent) throws NoSuchAlgorithmException, InvalidKeySpecException {
         if (pemContent.startsWith("-----BEGIN RSA PRIVATE KEY-----")) {

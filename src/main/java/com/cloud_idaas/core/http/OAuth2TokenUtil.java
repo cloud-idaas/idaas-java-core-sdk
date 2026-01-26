@@ -7,8 +7,6 @@ import com.cloud_idaas.core.domain.constants.HttpConstants;
 import com.cloud_idaas.core.domain.constants.OAuth2Constants;
 import com.cloud_idaas.core.exception.ClientException;
 import com.cloud_idaas.core.util.JSONUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 

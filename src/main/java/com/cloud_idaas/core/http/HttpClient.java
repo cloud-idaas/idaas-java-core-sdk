@@ -4,8 +4,9 @@ public interface HttpClient {
 
     /**
      * Send HTTP request
-     * @param request
-     * @return
+     *
+     * @param request HTTP request
+     * @return HttpResponse HTTP response
      */
     HttpResponse send(HttpRequest request);
 }

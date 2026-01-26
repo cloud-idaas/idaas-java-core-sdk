@@ -2,7 +2,6 @@ package com.cloud_idaas.core.util;
 
 import com.cloud_idaas.core.exception.CredentialException;
 import com.cloud_idaas.core.exception.EncodingException;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

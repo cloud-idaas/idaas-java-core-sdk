@@ -2,7 +2,6 @@ package com.cloud_idaas.core.http;
 
 import com.cloud_idaas.core.config.HttpConfiguration;
 import com.cloud_idaas.core.factory.IDaaSCredentialProviderFactory;
-import okhttp3.OkHttpClient;
 
 public class HttpClientFactory {
 
