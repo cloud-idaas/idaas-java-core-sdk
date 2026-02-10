@@ -67,6 +67,16 @@ public enum ErrorCode {
 
     REFRESH_TOKEN_NOT_FOUND("RefreshTokenNotFound"),
 
+    OPEN_API_ENDPOINT_NOT_FOUND("OpenApiEndpointNotFound"),
+
+    PLUGIN_NAME_NOT_FOUND("PluginNameNotFound"),
+
+    MULTIPLE_AUDIENCE_NOT_SUPPORTED("MultipleAudienceNotSupported"),
+
+    INVALID_SCOPE("InvalidScope"),
+
+    UNSUPPORTED_OPEN_API_TYPE("UnsupportedOpenApiType")
+
     ;
     private final String code;
 

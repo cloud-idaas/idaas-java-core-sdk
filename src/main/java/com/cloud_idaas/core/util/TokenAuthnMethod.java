@@ -13,6 +13,6 @@ public enum TokenAuthnMethod {
     PKCS7,
     PCA,
     OIDC,
-
+    PLUGIN
     ;
 }

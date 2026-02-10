@@ -45,6 +45,8 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
     private String clientX509Certificate;
     private String x509CertChains;
 
+    private String pluginName;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IDaaSMachineCredentialProvider.class);
 
     private IDaaSMachineCredentialProvider(IDaaSMachineCredentialProviderBuilder builder) {
@@ -72,6 +74,7 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
         this.oidcTokenProvider = builder.oidcTokenProvider;
         this.clientX509Certificate = builder.clientX509Certificate;
         this.x509CertChains = builder.x509CertChains;
+        this.pluginName = builder.pluginName;
     }
 
     @Override
@@ -155,6 +158,14 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
         this.x509CertChains = x509CertChains;
     }
 
+    public String getPluginName() {
+        return pluginName;
+    }
+
+    public void setPluginName(String pluginName) {
+        this.pluginName = pluginName;
+    }
+
     private IDaaSTokenResponse getTokenFromIDaaS() {
         switch (authnMethod) {
             case CLIENT_SECRET_BASIC:
@@ -210,6 +221,8 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
                 }
                 return OAuth2TokenUtil.getTokenWithPCA(clientId, applicationFederatedCredentialName, clientX509Certificate, x509CertChains,
                         clientAssertionProvider.getClientAssertion(), tokenEndpoint, scope);
+            case PLUGIN:
+                return OAuth2TokenUtil.getTokenWithPlugin(pluginName, scope);
         }
         throw new UnsupportedOperationException("authn method is unsupported.");
     }
@@ -242,6 +255,7 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
         private String scope;
         private String clientId;
         private TokenAuthnMethod authnMethod;
+        private String pluginName;
 
         private IDaaSMachineCredentialProviderBuilder() {}
 
@@ -299,6 +313,11 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
 
         public IDaaSMachineCredentialProviderBuilder authnMethod(TokenAuthnMethod authnMethod) {
             this.authnMethod = authnMethod;
+            return this;
+        }
+
+        public IDaaSMachineCredentialProviderBuilder pluginName(String pluginName) {
+            this.pluginName = pluginName;
             return this;
         }
 

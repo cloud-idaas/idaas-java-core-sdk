@@ -6,7 +6,9 @@ import com.cloud_idaas.core.domain.constants.ClientAssertionType;
 import com.cloud_idaas.core.domain.constants.HttpConstants;
 import com.cloud_idaas.core.domain.constants.OAuth2Constants;
 import com.cloud_idaas.core.exception.ClientException;
+import com.cloud_idaas.core.provider.PluginCredentialProvider;
 import com.cloud_idaas.core.util.JSONUtil;
+import com.cloud_idaas.core.util.PluginCredentialProviderUtil;
 
 import java.util.*;
 
@@ -173,4 +175,8 @@ public class OAuth2TokenUtil {
         return postTokenEndpoint(formBody, tokenEndpoint);
     }
 
+    public static IDaaSTokenResponse getTokenWithPlugin(String pluginName, String scope){
+        PluginCredentialProvider pluginCredentialProvider = PluginCredentialProviderUtil.getPluginCredentialProvider(pluginName);
+        return pluginCredentialProvider.getIDaaSCredential(scope);
+    }
 }

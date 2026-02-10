@@ -30,6 +30,7 @@ The M2M client application need complete feature permission and data permission 
 
 ### Integration
 #### Import Dependencies
+Please refer to the Maven repository for the latest version: https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk
 ```yaml
 <dependency>
     <groupId>com.cloud-idaas</groupId>

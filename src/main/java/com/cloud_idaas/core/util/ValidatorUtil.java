@@ -66,6 +66,11 @@ public class ValidatorUtil {
                     "X509 Cert Chains not found.");
             validateConfigNotNull(authnConfiguration.getPrivateKeyEnvVarName(), ErrorCode.PRIVATE_KEY_ENV_VAR_NAME_NOT_FOUND.getCode(),
                     "Private Key Env Var Name not found.");
+        } else if (TokenAuthnMethod.PLUGIN == authnMethod) {
+            validateConfigNotNull(idaasClientConfig.getOpenApiEndpoint(), ErrorCode.OPEN_API_ENDPOINT_NOT_FOUND.getCode(),
+                    "Open Api Endpoint not found.");
+            validateConfigNotNull(authnConfiguration.getPluginName(), ErrorCode.PLUGIN_NAME_NOT_FOUND.getCode(),
+                    "Plugin Name not found.");
         }
     }
 

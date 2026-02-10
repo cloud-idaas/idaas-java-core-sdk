@@ -11,11 +11,12 @@ public class IDaaSClientConfig implements Serializable {
     /**
      * default value, using idaas pam resource server scope
      */
-    private String scope = "urn:cloud:idaas:pam|cloud_account:obtain_access_credential";
+    private String scope = "urn:cloud:idaas:pam|.all";
     private String issuer;
     private String tokenEndpoint;
     private String deviceAuthorizationEndpoint;
     private String developerApiEndpoint;
+    private String openApiEndpoint;
 
     private IdentityAuthenticationConfiguration authnConfiguration;
 
@@ -80,6 +81,14 @@ public class IDaaSClientConfig implements Serializable {
         this.developerApiEndpoint = developerApiEndpoint;
     }
 
+    public String getOpenApiEndpoint() {
+        return openApiEndpoint;
+    }
+
+    public void setOpenApiEndpoint(String openApiEndpoint) {
+        this.openApiEndpoint = openApiEndpoint;
+    }
+
     public IdentityAuthenticationConfiguration getAuthnConfiguration() {
         return authnConfiguration;
     }
@@ -107,6 +116,7 @@ public class IDaaSClientConfig implements Serializable {
         this.tokenEndpoint = other.tokenEndpoint;
         this.deviceAuthorizationEndpoint = other.deviceAuthorizationEndpoint;
         this.developerApiEndpoint = other.developerApiEndpoint;
+        this.openApiEndpoint = other.openApiEndpoint;
         if (other.authnConfiguration != null) {
             this.authnConfiguration = IdentityAuthenticationConfiguration.copy(other.getAuthnConfiguration());
         } else {

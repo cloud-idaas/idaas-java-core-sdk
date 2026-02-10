@@ -1,3 +1,6 @@
+version: 0.0.2-beta
+Authentication method support:
+    PLUGIN
 version: 0.0.1-beta
 IDaaS core sdk authenticates with IDaaS using user-specified configurations to acquire a JWT-compliant Access Token.
 Deployment environment support:

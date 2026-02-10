@@ -3,10 +3,7 @@ package com.cloud_idaas.core.factory;
 import com.cloud_idaas.core.config.HttpConfiguration;
 import com.cloud_idaas.core.config.IDaaSClientConfig;
 import com.cloud_idaas.core.config.IdentityAuthenticationConfiguration;
-import com.cloud_idaas.core.domain.constants.AuthenticationConstants;
-import com.cloud_idaas.core.domain.constants.AuthenticationIdentityEnum;
-import com.cloud_idaas.core.domain.constants.ClientDeployEnvironmentEnum;
-import com.cloud_idaas.core.domain.constants.ErrorCode;
+import com.cloud_idaas.core.domain.constants.*;
 import com.cloud_idaas.core.exception.ConfigException;
 import com.cloud_idaas.core.implementation.IDaaSMachineCredentialProvider;
 import com.cloud_idaas.core.implementation.authentication.jwt.StaticClientSecretAssertionProvider;
@@ -183,6 +180,9 @@ public class IDaaSCredentialProviderFactory {
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
                 credentialProvider.setClientAssertionProvider(clientAssertionProvider);
                 break;
+            case PLUGIN:
+                credentialProvider.setPluginName(authnConfig.getPluginName());
+                break;
             default:
                 throw new ConfigException(ErrorCode.UNSUPPORTED_AUTHENTICATION_METHOD.getCode(), "Unsupported authentication method:" + authnMethod);
         }
@@ -197,11 +197,25 @@ public class IDaaSCredentialProviderFactory {
         return IDAAS_CLIENT_CONFIG.getDeveloperApiEndpoint();
     }
 
+    public static String getOpenApiEndpoint(){
+        if (!INITIALIZED.get()) {
+            throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory has not been initialized.");
+        }
+        return IDAAS_CLIENT_CONFIG.getOpenApiEndpoint();
+    }
+
     public static String getIDaasInstanceId() {
         if (!INITIALIZED.get()) {
             throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory has not been initialized.");
         }
         return IDAAS_CLIENT_CONFIG.getIdaasInstanceId();
+    }
+
+    public static String getClientId() {
+        if (!INITIALIZED.get()) {
+            throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory has not been initialized.");
+        }
+        return IDAAS_CLIENT_CONFIG.getClientId();
     }
 
     public static HttpConfiguration getHttpConfig() {

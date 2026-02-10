@@ -40,6 +40,8 @@ public class IdentityAuthenticationConfiguration implements Serializable {
 
     private String x509CertChains;
 
+    private String pluginName;
+
     private String humanAuthenticateClientId = "iap_developer";
 
     public IdentityAuthenticationConfiguration() {
@@ -125,6 +127,14 @@ public class IdentityAuthenticationConfiguration implements Serializable {
         this.x509CertChains = x509CertChains;
     }
 
+    public String getPluginName() {
+        return pluginName;
+    }
+
+    public void setPluginName(String pluginName) {
+        this.pluginName = pluginName;
+    }
+
     public String getHumanAuthenticateClientId() {
         return humanAuthenticateClientId;
     }
@@ -149,6 +159,7 @@ public class IdentityAuthenticationConfiguration implements Serializable {
         target.setOidcTokenFilePath(source.getOidcTokenFilePath());
         target.setClientX509Certificate(source.getClientX509Certificate());
         target.setX509CertChains(source.getX509CertChains());
+        target.setPluginName(source.getPluginName());
         target.setHumanAuthenticateClientId(source.getHumanAuthenticateClientId());
         return target;
     }
