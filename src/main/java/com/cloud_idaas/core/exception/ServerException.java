@@ -23,6 +23,21 @@ public class ServerException extends RuntimeException {
         this.requestId = requestId;
     }
 
+    public ServerException(Throwable cause) {
+        super(cause);
+    }
+
+    public ServerException(String message, Throwable cause) {
+        super(message, cause);
+        this.errorMessage = message;
+    }
+
+    public ServerException(String errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = message;
+    }
+
     public String getErrorCode() {
         return errorCode;
     }

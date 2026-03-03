@@ -118,7 +118,7 @@ public class DefaultOKHttpClientImp implements HttpClient{
                 try {
                     errResponse = convertResponseBodyToErrResponse(responseBody);
                 } catch (JsonSyntaxException e){
-                    throw new ClientException(String.valueOf(responseCode), responseBody);
+                    throw new ClientException(String.valueOf(responseCode), responseBody, e);
                 }
                 LOGGER.error("Client Error: {}", errResponse.getError());
                 LOGGER.error("Client Error Detail: {}", errResponse.getErrorDescription());
@@ -129,7 +129,7 @@ public class DefaultOKHttpClientImp implements HttpClient{
                 try {
                     errResponse = convertResponseBodyToErrResponse(responseBody);
                 } catch (JsonSyntaxException e){
-                    throw new ServerException(String.valueOf(responseCode), responseBody);
+                    throw new ServerException(String.valueOf(responseCode), responseBody, e);
                 }
                 LOGGER.error("Server Error: {}", errResponse.getError());
                 LOGGER.error("Server Error Detail: {}", errResponse.getErrorDescription());
@@ -138,12 +138,12 @@ public class DefaultOKHttpClientImp implements HttpClient{
             }
         } catch (IOException e) {
             if (ExceptionAnalyzer.isTargetCauseExist(e, ConnectException.class, ErrorCode.CONNECT_TIME_OUT.getCode())){
-                throw new ClientException("Connect Timeout", e.getMessage());
+                throw new ClientException("Connect Timeout", e.getMessage(), e);
             }
             if (ExceptionAnalyzer.isTargetCauseExist(e, SocketTimeoutException.class, ErrorCode.READ_TIME_OUT.getCode())){
-                throw new ServerException("Read Timeout", e.getMessage());
+                throw new ServerException("Read Timeout", e.getMessage(), e);
             }
-            throw new HttpException(String.format("Connect Failed: %s.", e.getMessage()));
+            throw new HttpException(String.format("Connect Failed: %s.", e.getMessage()), e);
         }
     }
 

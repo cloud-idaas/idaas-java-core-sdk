@@ -8,6 +8,9 @@ public class CredentialException extends RuntimeException {
 
     private String errorMessage;
 
+    public CredentialException() {
+    }
+
     public CredentialException(String message) {
         super(message);
         this.errorMessage = message;
@@ -19,8 +22,18 @@ public class CredentialException extends RuntimeException {
         this.errorMessage = message;
     }
 
+    public CredentialException(Throwable cause) {
+        super(cause);
+    }
+
     public CredentialException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public CredentialException(String errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = message;
     }
 
     public String getErrorCode() {

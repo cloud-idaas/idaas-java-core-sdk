@@ -8,6 +8,9 @@ public class EncodingException extends RuntimeException {
 
     private String errorMessage;
 
+    public EncodingException() {
+    }
+
     public EncodingException(String message) {
         super(message);
         this.errorMessage = message;
@@ -21,6 +24,12 @@ public class EncodingException extends RuntimeException {
 
     public EncodingException(String message, Throwable cause) {
         super(message, cause);
+        this.errorMessage = message;
+    }
+
+    public EncodingException(String errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
         this.errorMessage = message;
     }
 

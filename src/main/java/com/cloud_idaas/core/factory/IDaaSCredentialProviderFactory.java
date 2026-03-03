@@ -52,7 +52,7 @@ public class IDaaSCredentialProviderFactory {
             INITIALIZED.set(true);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory init failed.");
+            throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory init failed.", e);
         }
 
         initCredentialProvider();
@@ -134,12 +134,18 @@ public class IDaaSCredentialProviderFactory {
                 break;
             case CLIENT_SECRET_JWT:
                 clientAssertionProvider = new StaticClientSecretAssertionProvider(() -> System.getenv(authnConfig.getClientSecretEnvVarName()));
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setScope(scope);
                 credentialProvider.setClientAssertionProvider(clientAssertionProvider);
                 break;
             case PRIVATE_KEY_JWT:
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
                 privateKeyString = System.getenv(privateKeyEnvVarName);
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setScope(scope);
                 credentialProvider.setClientAssertionProvider(clientAssertionProvider);
                 break;
             case PKCS7:

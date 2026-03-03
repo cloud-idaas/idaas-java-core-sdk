@@ -9,6 +9,9 @@ public class CacheException extends RuntimeException {
 
     private String errorMessage;
 
+    public CacheException() {
+    }
+
     public CacheException(String message) {
         super(message);
         this.errorMessage = message;
@@ -22,6 +25,17 @@ public class CacheException extends RuntimeException {
 
     public CacheException(Throwable  cause){
         super(cause);
+    }
+
+    public CacheException(String message, Throwable cause){
+        super(message, cause);
+        this.errorMessage = message;
+    }
+
+    public CacheException(String errorCode, String message, Throwable cause){
+        super(message, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = message;
     }
 
     public String getErrorCode() {

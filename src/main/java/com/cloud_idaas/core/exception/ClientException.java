@@ -29,6 +29,28 @@ public class ClientException extends RuntimeException {
         this.requestId = requestId;
     }
 
+    public ClientException(Throwable cause){
+        super(cause);
+    }
+
+    public ClientException(String message, Throwable cause){
+        super(message, cause);
+        this.errorMessage = message;
+    }
+
+    public ClientException(String errorCode, String message, Throwable cause){
+        super(message, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = message;
+    }
+
+    public ClientException(String errorCode, String message, String requestId, Throwable cause){
+        super(message, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = message;
+        this.requestId = requestId;
+    }
+
     public String getErrorCode() {
         return errorCode;
     }

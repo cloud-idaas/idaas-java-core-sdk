@@ -11,4 +11,12 @@ public class ConfigException extends ClientException {
     public ConfigException(String errorCode, String errorMessage) {
         super(errorCode, errorMessage);
     }
+
+    public ConfigException(String errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+    }
+
+    public ConfigException(String errorCode, String errorMessage, Throwable cause) {
+        super(errorCode, errorMessage, cause);
+    }
 }

@@ -79,7 +79,7 @@ public class ConfigReader {
             return content.toString();
 
         } catch (IOException e) {
-            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load config file failed: " + configPath);
+            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load config file failed: " + configPath, e);
         }
     }
 
@@ -105,7 +105,7 @@ public class ConfigReader {
             }
 
         } catch (Exception e) {
-            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load JSON config file failed: " + configPath);
+            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load JSON config file failed: " + configPath, e);
         }
 
         return properties;
@@ -158,7 +158,7 @@ public class ConfigReader {
                 properties.load(inputStream);
             }
         } catch (IOException e) {
-            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load JSON config file failed: " + configPath);
+            throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "load JSON config file failed: " + configPath, e);
         }
 
         return properties;

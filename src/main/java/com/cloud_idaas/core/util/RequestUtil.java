@@ -87,7 +87,7 @@ public class RequestUtil {
                 }
             }
         } catch (UnsupportedEncodingException e){
-            throw new EncodingException(e.getMessage());
+            throw new EncodingException(e.getMessage(), e);
         }
 
         String query = builder.toString();

@@ -10,4 +10,8 @@ public class ConcurrentOperationException extends ClientException {
     public ConcurrentOperationException(String errorCode, String message) {
         super(errorCode, message);
     }
+
+    public ConcurrentOperationException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
 }
