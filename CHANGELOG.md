@@ -1,3 +1,8 @@
+version: 0.0.3-beta
+Fix bug:
+    Authentication method:
+        CLIENT_SECRET_JWT
+        PRIVATE_KEY_JWT
 version: 0.0.2-beta
 Authentication method support:
     PLUGIN
