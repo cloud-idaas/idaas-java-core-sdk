@@ -34,13 +34,16 @@ public interface OAuth2Constants {
 
     String SUBJECT_TOKEN = "subject_token";
 
+    String ACTOR_TOKEN = "actor_token";
+
     String SUBJECT_TOKEN_TYPE = "subject_token_type";
 
-    String SUBJECT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
+    String ACTOR_TOKEN_TYPE = "actor_token_type";
 
     String REQUESTED_TOKEN_TYPE = "requested_token_type";
 
-    String REQUESTED_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
+    String ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token";
 
     String AUDIENCE = "audience";
+
 }

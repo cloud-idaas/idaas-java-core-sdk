@@ -1,3 +1,8 @@
+version: 0.0.4-beta
+Token Exchange support
+Fix bug:
+    Authentication method:
+        PCA
 version: 0.0.3-beta
 Fix bug:
     Authentication method:

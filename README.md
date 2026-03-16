@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Development Status](https://img.shields.io/badge/status-Beta-orange)](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk)
 
+[简体中文](README_zh.md)
+
 Java SDK for IDaaS (Identity as a Service) M2M product, providing developers with convenient machine-to-machine authentication capabilities.
 
 ## Features
@@ -13,6 +15,7 @@ Java SDK for IDaaS (Identity as a Service) M2M product, providing developers wit
 - **Flexible Configuration**: Supports configuration files, environment variables, and programmatic configuration
 - **Plugin Extensions**: Supports custom credential providers for special scenarios
 - **Cloud-Native Support**: Built-in attested document support for Alibaba Cloud ECS and Alibaba Cloud ACK
+- **Token Exchange (RFC 8693)**: Exchange tokens for different scopes or audiences, supporting token downscoping and service-to-service access scenarios
 
 ## Requirements
 
@@ -27,9 +30,10 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.cloud-idaas</groupId>
     <artifactId>idaas-java-core-sdk</artifactId>
-    <version>0.0.3-beta</version>
+    <version>0.0.4-beta</version>
 </dependency>
 ```
+[Latest version](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk)
 
 ## Quick Start
 
@@ -69,16 +73,20 @@ export IDAAS_CLIENT_SECRET="your-client-secret"
 ```java
 import com.cloud_idaas.core.factory.IDaaSCredentialProviderFactory;
 import com.cloud_idaas.core.provider.IDaaSCredentialProvider;
+public class Sample {
 
-// Initialize (automatically loads configuration file)
-IDaaSCredentialProviderFactory.init();
+    public static void main(String[] args) {
+        // 初始化（自动加载配置文件）
+        IDaaSCredentialProviderFactory.init();
 
-// Get credential provider
-IDaaSCredentialProvider credentialProvider = IDaaSCredentialProviderFactory.getIDaaSCredentialProvider();
+        // 获取凭证提供器
+        IDaaSCredentialProvider credentialProvider = IDaaSCredentialProviderFactory.getIDaaSCredentialProvider();
 
-// Get access token
-String accessToken = credentialProvider.getBearerToken();
-System.out.println("Access Token: " + accessToken);
+        // 获取访问令牌
+        String accessToken = credentialProvider.getBearerToken();
+        System.out.println("Access Token: " + accessToken);
+    }
+}
 ```
 
 ## Configuration Details
@@ -87,16 +95,18 @@ System.out.println("Access Token: " + accessToken);
 
 The SDK searches for configuration files in the following order:
 
-1. Java System Property path: `-Dcloud_idaas_config_path=/.../client-config.json`
-2. Environment variable path: `CLOUD_IDAAS_CONFIG_PATH=/.../client-config.json`
+1. Java System Property path:     
+    `-Dcloud_idaas_config_path=/path/to/client-config.json`     
+    classpath: `-Dcloud_idaas_config_path=classpath:client-config.json` (Place the configuration file at `src/main/resources/client-config.json`)
+2. Environment variable path: `CLOUD_IDAAS_CONFIG_PATH=/path/to/client-config.json`
 3. Default path: `~/.cloud_idaas/client-config.json`
 
 ### Complete Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer":"https://xxx/api/v2/iauths_system/oauth2",
     "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
     "scope": "api.example.com|read:file",
@@ -156,8 +166,8 @@ Use Client Secret for authentication. Supports `CLIENT_SECRET_BASIC`, `CLIENT_SE
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -181,8 +191,8 @@ Use private key for authentication, offering higher security.
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -206,8 +216,8 @@ Use PKCS7 attested document for authentication in cloud environments.
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -232,8 +242,8 @@ Use OIDC token for authentication.
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -258,8 +268,8 @@ Use X.509 certificate for authentication.
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -286,8 +296,8 @@ Use plugin-based credential provider for authentication.
 
 ```json
 {
-    "idaasInstanceId": "idaas_xxx",
-    "clientId": "app_xxx",
+    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
+    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
     "issuer": "your-idaas-issuer-url",
     "tokenEndpoint": "your-idaas-token-endpoint",
     "scope": "your-requested-scope",
@@ -304,6 +314,66 @@ Use plugin-based credential provider for authentication.
     }
 }
 ```
+
+## Token Exchange
+
+Token Exchange (RFC 8693) allows you to exchange a subject token for a new access token with different scope or audience. This is useful for token downscoping and service-to-service access scenarios.
+
+### Basic Token Exchange
+
+For working examples, see the `samples/` directory:
+
+- `samples/TokenExchangeSample.java` - Token Exchange sample
+
+```java
+import com.cloud_idaas.core.factory.IDaaSCredentialProviderFactory;
+import com.cloud_idaas.core.provider.IDaaSTokenExchangeCredentialProvider;
+import com.cloud_idaas.core.util.OAuth2Constants;
+
+public class TokenExchangeSample {
+
+    public static void main(String[] args) {
+
+        // Initialize the factory with configuration
+        IDaaSCredentialProviderFactory.init();
+
+        // The subject token to exchange
+        String subjectToken = "";
+
+        //  Get Token Exchange credential provider with scope from config file
+        // IDaaSTokenExchangeCredentialProvider tokenExchangeCredentialProvider =
+        //                IDaaSCredentialProviderFactory.getIDaaSTokenExchangeCredentialProvider();
+
+        // scope format: <audience>|<scope>
+        String scope = "api.example.com|read:file";
+        // Get Token Exchange credential provider with scope specified by parameter
+        IDaaSTokenExchangeCredentialProvider tokenExchangeCredentialProvider =
+                IDaaSCredentialProviderFactory.getIDaaSTokenExchangeCredentialProvider(scope);
+
+        // perform token exchange
+        String accessToken = tokenExchangeCredentialProvider.getIssuedToken(
+                subjectToken,
+                OAuth2Constants.ACCESS_TOKEN_TYPE,
+                OAuth2Constants.ACCESS_TOKEN_TYPE
+        );
+
+        System.out.println(accessToken);
+    }
+}
+```
+
+### Token Exchange Parameters
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| subject_token | String | Yes | The token to be exchanged |
+| subject_token_type | String | Yes | Type of the subject token (e.g., `urn:ietf:params:oauth:token-type:access_token`) |
+| requested_token_type | String | No | Type of token requested (defaults to access token) |
+
+### Use Cases
+
+1. **Token Downscoping**: Exchange a token with broader permissions for one with limited scope
+2. **Service-to-Service Access**: Transfer the same user identity across services to obtain the required access token
 
 ## Support and Feedback
 

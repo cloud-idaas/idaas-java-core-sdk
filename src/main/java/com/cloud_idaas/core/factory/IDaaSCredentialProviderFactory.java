@@ -6,6 +6,7 @@ import com.cloud_idaas.core.config.IdentityAuthenticationConfiguration;
 import com.cloud_idaas.core.domain.constants.*;
 import com.cloud_idaas.core.exception.ConfigException;
 import com.cloud_idaas.core.implementation.IDaaSMachineCredentialProvider;
+import com.cloud_idaas.core.implementation.IDaaSMachineTokenExchangeCredentialProvider;
 import com.cloud_idaas.core.implementation.authentication.jwt.StaticClientSecretAssertionProvider;
 import com.cloud_idaas.core.implementation.authentication.jwt.StaticPrivateKeyAssertionProvider;
 import com.cloud_idaas.core.implementation.authentication.oidc.FileOidcTokenProvider;
@@ -36,6 +37,8 @@ public class IDaaSCredentialProviderFactory {
      * It will cache all credential providers, based by scope.
      */
     private static final ConcurrentMap<String, IDaaSCredentialProvider> CREDENTIAL_PROVIDERS = new ConcurrentHashMap<>();
+
+    private static final ConcurrentMap<String, IDaaSMachineTokenExchangeCredentialProvider> TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS = new ConcurrentHashMap<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IDaaSCredentialProviderFactory.class);
 
@@ -76,6 +79,7 @@ public class IDaaSCredentialProviderFactory {
             HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER.getOidcToken();
         }
         CREDENTIAL_PROVIDERS.computeIfAbsent(IDAAS_CLIENT_CONFIG.getScope(), IDaaSCredentialProviderFactory::createCredentialProvider);
+        TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS.computeIfAbsent(IDAAS_CLIENT_CONFIG.getScope(), IDaaSCredentialProviderFactory::createTokenExchangeCredentialProvider);
     }
 
     public synchronized static void init(IDaaSClientConfig authenticationConfig) {
@@ -86,16 +90,16 @@ public class IDaaSCredentialProviderFactory {
 
         IDAAS_CLIENT_CONFIG.assign(authenticationConfig);
         validateClientConfig(IDAAS_CLIENT_CONFIG);
+        validateHttpConfig(IDAAS_CLIENT_CONFIG.getHttpConfiguration());
         INITIALIZED.set(true);
     }
 
     private static void validateClientConfig(IDaaSClientConfig clientConfig) {
         ValidatorUtil.validateBaseConfig(clientConfig);
-        if (clientConfig.getAuthnConfiguration().getIdentityType() == AuthenticationIdentityEnum.HUMAN){
+        if (clientConfig.getAuthnConfiguration().getIdentityType() == AuthenticationIdentityEnum.HUMAN) {
             ValidatorUtil.validateHumanConfig(clientConfig);
-        } else {
-            ValidatorUtil.validateClientConfig(clientConfig);
         }
+        ValidatorUtil.validateClientConfig(clientConfig);
     }
 
     private static void validateHttpConfig(HttpConfiguration httpConfiguration) {
@@ -111,6 +115,7 @@ public class IDaaSCredentialProviderFactory {
             throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory has not been initialized.");
         }
 
+        ScopeUtil.validateScope(scope);
         return CREDENTIAL_PROVIDERS.computeIfAbsent(scope, IDaaSCredentialProviderFactory::createCredentialProvider);
     }
 
@@ -184,6 +189,9 @@ public class IDaaSCredentialProviderFactory {
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
                 privateKeyString = System.getenv(privateKeyEnvVarName);
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setScope(scope);
                 credentialProvider.setClientAssertionProvider(clientAssertionProvider);
                 break;
             case PLUGIN:
@@ -194,6 +202,103 @@ public class IDaaSCredentialProviderFactory {
         }
         credentialProvider.getCredential();
         return credentialProvider;
+    }
+
+    public static IDaaSMachineTokenExchangeCredentialProvider getIDaaSTokenExchangeCredentialProvider() {
+        return getIDaaSTokenExchangeCredentialProvider(IDAAS_CLIENT_CONFIG.getScope());
+    }
+
+    public static IDaaSMachineTokenExchangeCredentialProvider getIDaaSTokenExchangeCredentialProvider(String scope) {
+        if (!INITIALIZED.get()) {
+            throw new ConfigException(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), "IDaaS Credential Provider Factory has not been initialized.");
+        }
+
+        ScopeUtil.validateScope(scope);
+        return TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS.computeIfAbsent(scope, IDaaSCredentialProviderFactory::createTokenExchangeCredentialProvider);
+    }
+
+    private static IDaaSMachineTokenExchangeCredentialProvider createTokenExchangeCredentialProvider(String scope) {
+        IdentityAuthenticationConfiguration authnConfig = IDAAS_CLIENT_CONFIG.getAuthnConfiguration();
+        IDaaSMachineTokenExchangeCredentialProvider tokenExchangeProvider = IDaaSMachineTokenExchangeCredentialProvider.builder()
+                .clientId(IDAAS_CLIENT_CONFIG.getClientId())
+                .scope(scope)
+                .tokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint())
+                .authnMethod(authnConfig.getAuthnMethod())
+                .build();
+        TokenAuthnMethod authnMethod = authnConfig.getAuthnMethod();
+
+        String privateKeyEnvVarName;
+        String privateKeyString;
+        JwtClientAssertionProvider clientAssertionProvider;
+        switch (authnMethod) {
+            case CLIENT_SECRET_BASIC:
+            case CLIENT_SECRET_POST:
+                tokenExchangeProvider.setClientSecretSupplier(() -> System.getenv(authnConfig.getClientSecretEnvVarName()));
+                break;
+            case CLIENT_SECRET_JWT:
+                clientAssertionProvider = new StaticClientSecretAssertionProvider(() -> System.getenv(authnConfig.getClientSecretEnvVarName()));
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticClientSecretAssertionProvider)clientAssertionProvider).setScope(scope);
+                tokenExchangeProvider.setClientAssertionProvider(clientAssertionProvider);
+                break;
+            case PRIVATE_KEY_JWT:
+                privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
+                privateKeyString = System.getenv(privateKeyEnvVarName);
+                clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setScope(scope);
+                tokenExchangeProvider.setClientAssertionProvider(clientAssertionProvider);
+                break;
+            case PKCS7:
+                tokenExchangeProvider.setApplicationFederatedCredentialName(authnConfig.getApplicationFederatedCredentialName());
+                if (authnConfig.getClientDeployEnvironment() == ClientDeployEnvironmentEnum.ALIBABA_CLOUD_ECS) {
+                    AlibabaCloudEcsAttestedDocumentProvider documentProvider = AlibabaCloudEcsAttestedDocumentProvider.builder()
+                            .idaasInstanceId(IDAAS_CLIENT_CONFIG.getIdaasInstanceId())
+                            .build();
+                    tokenExchangeProvider.setAttestedDocumentProvider(documentProvider);
+                }
+                break;
+            case OIDC:
+                tokenExchangeProvider.setApplicationFederatedCredentialName(authnConfig.getApplicationFederatedCredentialName());
+                if (authnConfig.getClientDeployEnvironment() == ClientDeployEnvironmentEnum.KUBERNETES) {
+                    String oidcTokenFilePath = authnConfig.getOidcTokenFilePath();
+                    if (StringUtil.isEmpty(oidcTokenFilePath) && StringUtil.isNotEmpty(authnConfig.getOidcTokenFilePathEnvVarName())) {
+                        oidcTokenFilePath = System.getenv(authnConfig.getOidcTokenFilePathEnvVarName());
+                    }
+
+                    if (StringUtil.isEmpty(oidcTokenFilePath)) {
+                        oidcTokenFilePath = AuthenticationConstants.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH;
+                    }
+                    OidcTokenProvider oidcTokenProvider = new FileOidcTokenProvider(oidcTokenFilePath);
+                    tokenExchangeProvider.setOidcTokenProvider(oidcTokenProvider);
+                } else if (authnConfig.getClientDeployEnvironment() == ClientDeployEnvironmentEnum.COMPUTER) {
+                    tokenExchangeProvider.setOidcTokenProvider(HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER);
+                } else {
+                    throw new ConfigException(ErrorCode.UNSUPPORTED_CLIENT_DEPLOY_ENVIRONMENT.getCode(), "Unsupported client deploy environment:" +
+                            authnConfig.getClientDeployEnvironment());
+                }
+                break;
+            case PCA:
+                tokenExchangeProvider.setApplicationFederatedCredentialName(authnConfig.getApplicationFederatedCredentialName());
+                tokenExchangeProvider.setClientX509Certificate(authnConfig.getClientX509Certificate());
+                tokenExchangeProvider.setX509CertChains(authnConfig.getX509CertChains());
+                privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
+                privateKeyString = System.getenv(privateKeyEnvVarName);
+                clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
+                ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setScope(scope);
+                tokenExchangeProvider.setClientAssertionProvider(clientAssertionProvider);
+                break;
+            case PLUGIN:
+                tokenExchangeProvider.setPluginName(authnConfig.getPluginName());
+                break;
+            default:
+                throw new ConfigException(ErrorCode.UNSUPPORTED_AUTHENTICATION_METHOD.getCode(), "Unsupported authentication method:" + authnMethod);
+        }
+        return tokenExchangeProvider;
     }
 
     public static String getDeveloperApiEndpoint() {

@@ -26,6 +26,10 @@ public class IDaaSTokenResponse implements IDaaSCredential, Serializable {
 
     @SerializedName("token_type")
     private String tokenType;
+
+    @SerializedName("issued_token_type")
+    private String issuedTokenType;
+
     /**
      * Token expiration time in seconds
      */
@@ -56,6 +60,15 @@ public class IDaaSTokenResponse implements IDaaSCredential, Serializable {
 
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
+    }
+
+    @Override
+    public String getIssuedTokenType() {
+        return issuedTokenType;
+    }
+
+    public void setIssuedTokenType(String issuedTokenType) {
+        this.issuedTokenType = issuedTokenType;
     }
 
     public long getExpiresIn() {

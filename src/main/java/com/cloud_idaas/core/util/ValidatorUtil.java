@@ -28,7 +28,8 @@ public class ValidatorUtil {
         validateConfigNotNull(idaasClientConfig.getClientId(), ErrorCode.CLIENT_ID_NOT_FOUND.getCode(), "Client ID not found.");
         validateConfigNotNull(idaasClientConfig.getIssuer(), ErrorCode.ISSUER_ENDPOINT_NOT_FOUND.getCode(), "Issuer Endpoint not found");
         validateConfigNotNull(idaasClientConfig.getTokenEndpoint(), ErrorCode.TOKEN_ENDPOINT_NOT_FOUND.getCode(), "Token Endpoint not found.");
-        validateConfigNotNull(idaasClientConfig.getDeveloperApiEndpoint(), ErrorCode.DEVELOPER_API_ENDPOINT_NOT_FOUND.getCode(), "Developer Api Endpoint not found.");
+        ScopeUtil.validateScope(idaasClientConfig.getScope());
+        validateConfigNotNull(idaasClientConfig.getAuthnConfiguration(), ErrorCode.AUTHN_CONFIGURATION_NOT_FOUND.getCode(), "Authn Configuration not found.");
     }
 
     public static void validateHumanConfig(IDaaSClientConfig idaasClientConfig) {

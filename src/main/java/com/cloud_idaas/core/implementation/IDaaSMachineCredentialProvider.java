@@ -210,6 +210,9 @@ public class IDaaSMachineCredentialProvider extends AbstractRefreshedCredentialP
                 String oidcToken = oidcTokenProvider.getOidcToken();
                 return OAuth2TokenUtil.getTokenWithOIDCFederatedCredential(clientId, applicationFederatedCredentialName, oidcToken, tokenEndpoint, scope);
             case PCA:
+                if (clientAssertionProvider == null) {
+                    throw new IllegalArgumentException("clientAssertionProvider is null.");
+                }
                 if (StringUtil.isBlank(applicationFederatedCredentialName)) {
                     throw new IllegalArgumentException("applicationFederatedCredentialName is blank");
                 }

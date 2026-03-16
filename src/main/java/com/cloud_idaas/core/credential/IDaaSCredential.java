@@ -18,4 +18,5 @@ public interface IDaaSCredential {
 
     String getTokenType();
 
+    String getIssuedTokenType();
 }
