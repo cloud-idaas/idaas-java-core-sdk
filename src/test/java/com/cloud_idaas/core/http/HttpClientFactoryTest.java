@@ -38,16 +38,11 @@ class HttpClientFactoryTest {
 
     /**
      * 使用反射重置单例状态
+     * 注意: singletonOKHttpClient 字段不是 final 的，只需直接设置为 null
      */
     private void resetSingleton() throws Exception {
         Field singletonField = HttpClientFactory.class.getDeclaredField("singletonOKHttpClient");
         singletonField.setAccessible(true);
-        
-        // 移除 final 修饰符
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(singletonField, singletonField.getModifiers() & ~Modifier.FINAL);
-        
         singletonField.set(null, null);
     }
 

@@ -1,119 +1,92 @@
-# idaas-java-core-sdk
+# Environment Setup
 
 [![Java Version](https://img.shields.io/badge/java-8%2B-blue)](https://www.java.com/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
-[![Development Status](https://img.shields.io/badge/status-Beta-orange)](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk)
+
+Java SDK for IDaaS (Identity as a Service) M2M products, providing convenient machine-to-machine authentication capabilities for developers.
 
 [简体中文](README_zh.md)
 
-Java SDK for IDaaS (Identity as a Service) M2M product, providing developers with convenient machine-to-machine authentication capabilities.
-
 ## Features
 
-- **Multiple Authentication Methods**: Supports JWT Client Secret, JWT Private Key, OIDC Token, PKCS7 Attested Document, and other M2M authentication methods
+- **Multiple Authentication Methods**: Supports various M2M authentication methods including JWT Client Secret, JWT Private Key, OIDC Token, PKCS7 Attested Document, etc.
+- **Plugin Extension**: Supports custom credential providers to meet special scenario requirements
 - **Intelligent Caching Mechanism**: Built-in credential caching strategy with prefetch and stale value handling to reduce unnecessary network requests
 - **Flexible Configuration**: Supports configuration files, environment variables, and programmatic configuration
-- **Plugin Extensions**: Supports custom credential providers for special scenarios
-- **Cloud-Native Support**: Built-in attested document support for Alibaba Cloud ECS and Alibaba Cloud ACK
-- **Token Exchange (RFC 8693)**: Exchange tokens for different scopes or audiences, supporting token downscoping and service-to-service access scenarios
+- **Token Exchange (RFC 8693)**: Supports token exchange to obtain access tokens with different scopes or audiences, suitable for token downgrading and service-to-service call scenarios
 
 ## Requirements
 
-- Java >= 8
-- Maven >= 3.6
+- JDK 1.8 or above
+- Maven
 
-## Installation
+## Install Java SDK
 
-Add the following dependency to your `pom.xml`:
+Add the following dependency in `pom.xml` via Maven:
 
 ```xml
 <dependency>
     <groupId>com.cloud-idaas</groupId>
     <artifactId>idaas-java-core-sdk</artifactId>
+    <!-- Please replace with the latest SDK version -->
     <version>0.0.4-beta</version>
 </dependency>
 ```
-[Latest version](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk)
 
-## Quick Start
+[Latest SDK Version](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-sdk)
 
-> **Important**: Before using any SDK features, you must call `IDaaSCredentialProviderFactory.init()` to initialize the SDK. This step is **required** and should be done once at application startup.
+For scenarios like Function Compute (FC), IDaaS supports OpenAPI authentication using Alibaba Cloud credentials (AK/SK, STS) to obtain M2M client tokens. You also need to add the Alibaba Cloud authentication extension plugin in `pom.xml`:
 
-### 1. Configuration File
+```xml
+<dependency>
+    <groupId>com.cloud-idaas</groupId>
+    <artifactId>idaas-java-core-alibabacloud-authentication-plugin</artifactId>
+    <!-- Please replace with the latest version of Alibaba Cloud authentication extension plugin -->
+    <version>0.0.1-beta</version>
+</dependency>
+```
 
-Create a configuration file `~/.cloud_idaas/client_config.json`:
+[Latest Alibaba Cloud Authentication Plugin Version](https://mvnrepository.com/artifact/com.cloud-idaas/idaas-java-core-alibabacloud-authentication-plugin)
+
+## Specify Configuration File
+
+The default path for the configuration file is: `~/.cloud_idaas/client-config.json`. If not explicitly specified, the configuration file will be loaded from this path by default.
+
+You can specify the configuration file path via Java system property or environment variable:
+
+- Java system property name: `cloud_idaas_config_path`
+- Environment variable name: `CLOUD_IDAAS_CONFIG_PATH`
+
+### Java System Property Example
+
+```
+-Dcloud_idaas_config_path=/.../client-config.json
+
+# In SpringBoot projects, the configuration file can be placed in src/main/resources/ and specified via classpath
+-Dcloud_idaas_config_path=classpath:client-config.json
+```
+
+### Environment Variable Example
+
+```
+CLOUD_IDAAS_CONFIG_PATH=/.../client-config.json
+```
+
+## Configuration File Description
+
+Configuration file example:
 
 ```json
 {
-    "idaasInstanceId": "your-idaas-instance-id",
-    "clientId": "your-client-id",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint":"your-open-api-endpoint",
-    "developerApiEndpoint": "your-developer-api-endpoint",
-    "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
-        "authnMethod": "CLIENT_SECRET_POST",
-        "clientSecretEnvVarName": "IDAAS_CLIENT_SECRET"
-    }
-}
-```
-
-### 2. Environment Variables
-
-Set environment variables:
-
-```bash
-export IDAAS_CLIENT_SECRET="your-client-secret"
-```
-
-### 3. Use in code
-
-```java
-import com.cloud_idaas.core.factory.IDaaSCredentialProviderFactory;
-import com.cloud_idaas.core.provider.IDaaSCredentialProvider;
-public class Sample {
-
-    public static void main(String[] args) {
-        // 初始化（自动加载配置文件）
-        IDaaSCredentialProviderFactory.init();
-
-        // 获取凭证提供器
-        IDaaSCredentialProvider credentialProvider = IDaaSCredentialProviderFactory.getIDaaSCredentialProvider();
-
-        // 获取访问令牌
-        String accessToken = credentialProvider.getBearerToken();
-        System.out.println("Access Token: " + accessToken);
-    }
-}
-```
-
-## Configuration Details
-
-### Configuration File Paths
-
-The SDK searches for configuration files in the following order:
-
-1. Java System Property path:     
-    `-Dcloud_idaas_config_path=/path/to/client-config.json`     
-    classpath: `-Dcloud_idaas_config_path=classpath:client-config.json` (Place the configuration file at `src/main/resources/client-config.json`)
-2. Environment variable path: `CLOUD_IDAAS_CONFIG_PATH=/path/to/client-config.json`
-3. Default path: `~/.cloud_idaas/client-config.json`
-
-### Complete Configuration Example
-
-```json
-{
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer":"https://xxx/api/v2/iauths_system/oauth2",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
     "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
     "scope": "api.example.com|read:file",
-    "openApiEndpoint":"eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint":"eiam-developerapi.[region_id].aliyuncs.com",
+    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
+    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "CLIENT_SECRET_POST",
         "clientSecretEnvVarName": "IDAAS_CLIENT_SECRET"
     },
@@ -124,58 +97,56 @@ The SDK searches for configuration files in the following order:
 }
 ```
 
-### Configuration Items
+### Parameter Description
 
-| Configuration Item | Type | Required | Description |
-|-------------------|------|----------|-------------|
-| idaasInstanceId | string | Yes | IDaaS instance ID |
-| clientId | string | Yes | Client ID for authentication |
-| issuer | string | Yes | OAuth2 issuer URL |
-| tokenEndpoint | string | Yes | OAuth2 token endpoint URL |
-| scope | string | No | Requested scope |
-| openApiEndpoint | string | No | OpenAPI endpoint |
-| developerApiEndpoint | string | No | Developer API endpoint |
-| authnConfiguration | object | Yes | Authentication configuration |
-| httpConfiguration | object | No | HTTP client configuration |
+| Field Name | Description |
+|------------|-------------|
+| idaasInstanceId | Required, IDaaS EIAM instance ID. |
+| clientId | Required, IDaaS application ID, can be viewed in the corresponding IDaaS application. |
+| issuer | Required, IDaaS EIAM instance Issuer endpoint, can be viewed in any M2M application under the IDaaS EIAM instance. |
+| tokenEndpoint | Required, IDaaS EIAM instance token endpoint, can be viewed in any M2M application under the IDaaS EIAM instance. |
+| scope | Required, specifies the audience identifier and permission identifier of the M2M server application to access, format is `audience\|scope`. <br>For scenarios of obtaining STS Token or credentials of RAM roles hosted in IDaaS, it is fixed to `urn:cloud:idaas:pam\|.all`, representing the built-in scope of IDaaS. |
+| openApiEndpoint | Optional, IDaaS OpenAPI address, used when using OpenAPI authentication. Service address can be obtained from [IDaaS EIAM - Alibaba Cloud OpenAPI Developer Portal](https://api.aliyun.com/product/Eiam). <br>If the application is deployed in Alibaba Cloud VPC and in the same region as the IDaaS instance, it can be accessed via intranet VPC address, see VPC address in Alibaba Cloud OpenAPI Developer Portal. |
+| developerApiEndpoint | Optional, IDaaS DeveloperAPI address, used when obtaining STS Token or credentials of RAM roles hosted in IDaaS. Service address can be obtained from [IDaaS EIAM - Alibaba Cloud OpenAPI Developer Portal](https://api.aliyun.com/product/Eiam). <br>If the application is deployed in Alibaba Cloud VPC and in the same region as the IDaaS instance, it can be accessed via intranet VPC address, see VPC address in Alibaba Cloud OpenAPI Developer Portal. |
+| authnConfiguration | - identityType: Optional, default value is `CLIENT`, currently only supports `CLIENT`, meaning M2M client application authenticates with machine identity. <br>- authnMethod: Required, authentication method. Different authentication methods require different authnConfiguration fields, see **authnMethod Field Values and authnConfiguration Field Mapping** for details. |
+| httpConfiguration | HTTP protocol related configuration, contains 2 fields: <br>- connectTimeout: Optional, maximum wait time for client to establish connection with server (milliseconds), default is 5000. <br>- readTimeout: Optional, maximum wait time for client to wait for server data after connection is established (milliseconds), default is 10000. |
 
-### Scope Format
+### authnMethod Field Values and authnConfiguration Field Mapping
 
-The SDK uses a specific scope format with audience and scope values separated by `|`:
+| authnMethod | Required authnConfiguration Field | authnConfiguration Field Description                                                                                                                                                                                                                                                                                     |
+|-------------|-----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CLIENT_SECRET_BASIC | clientSecretEnvVarName | Field value is the environment variable name, through which the M2M client application's Client Secret is read.                                                                                                                                                                                                          |
+| CLIENT_SECRET_POST | clientSecretEnvVarName | Field value is the environment variable name, through which the M2M client application's Client Secret is read.                                                                                                                                                                                                          |
+| CLIENT_SECRET_JWT | clientSecretEnvVarName | Field value is the environment variable name, through which the M2M client application's Client Secret is read.                                                                                                                                                                                                          |
+| PRIVATE_KEY_JWT | privateKeyEnvVarName | Field value is the environment variable name, through which the M2M client application's Private Key is read.                                                                                                                                                                                                            |
+| PKCS7 | applicationFederatedCredentialName | PKCS7 federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                            |
+| PKCS7 | clientDeployEnvironment | Deployment environment, currently only supports `ALIBABA_CLOUD_ECS`.                                                                                                                                                                                                                                                     |
+| OIDC | applicationFederatedCredentialName | OIDC federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                             |
+| OIDC | clientDeployEnvironment | Deployment environment, currently only supports `KUBERNETES`.                                                                                                                                                                                                                                                            |
+| OIDC | oidcTokenFilePath | Optional, used to specify the Service Account Token file path. If not configured, it will try to read the path through the environment variable specified by oidcTokenFilePathEnvVarName; if both are not set, it will use the Kubernetes standard path by default: /var/run/secrets/kubernetes.io/serviceaccount/token. |
+| OIDC | oidcTokenFilePathEnvVarName | Optional, takes effect when oidcTokenFilePath is not specified, field value is the environment variable name, through which the Service Account Token file path is read.                                                                                                                                                 |
+| PCA | applicationFederatedCredentialName | PCA federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                              |
+| PCA | clientX509Certificate | End certificate, format: <br>`-----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE-----`                                                                                                                                                                                                                                 |
+| PCA | x509CertChains | Intermediate certificate list, multiple certificates are concatenated with newlines, format: <br>`-----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE----- -----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE-----`                                                                                                   |
+| PCA | privateKeyEnvVarName | Field value is the environment variable name, through which the M2M client application's Private Key is read.                                                                                                                                                                                                            |
+| PLUGIN | pluginName | pluginName is the extension plugin name, currently only supports `alibabacloudPluginCredentialProvider`, which is Alibaba Cloud OpenAPI authentication method.<br> *Configure RAM permissions, refer to [Alibaba Cloud OpenAPI Authentication](https://help.aliyun.com/zh/idaas/eiam/developer-reference/alibaba-cloud-openapi-authentication?spm=a2c4g.11186623.help-menu-111120.d_4_2_2_1.75c47c06DzCKYj&scm=20140722.H_3024776._.OR_help-T_cn~zh-V_1).                                                                                                                                                     |
 
-```
-audience|scope_value
-```
+## Configuration Examples
 
-Examples:
-- `api.example.com|read:file`
-- `api.example.com|write:file`
-- `resource.server|admin`
+Configuration examples for different authentication methods.
 
-Multiple scope values for the same audience can be requested:
-```
-api.example.com|read:file api.example.com|write:file
-```
-
-**Note**: Multiple audiences in a single request are not supported.
-
-## Authentication Methods
-
-### Client Secret Authentication
-
-Use Client Secret for authentication. Supports `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`, and `CLIENT_SECRET_JWT` methods.
+### Client Secret Credential Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
-        "authnMethod": "CLIENT_SECRET_POST",
+        "identityType": "CLIENT",
+        "authnMethod": "CLIENT_SECRET_BASIC",
         "clientSecretEnvVarName": "IDAAS_CLIENT_SECRET"
     },
     "httpConfiguration": {
@@ -185,21 +156,17 @@ Use Client Secret for authentication. Supports `CLIENT_SECRET_BASIC`, `CLIENT_SE
 }
 ```
 
-### Private Key Authentication
-
-Use private key for authentication, offering higher security.
+### Private Key Credential Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "PRIVATE_KEY_JWT",
         "privateKeyEnvVarName": "ENV_PRIVATE_KEY"
     },
@@ -210,23 +177,19 @@ Use private key for authentication, offering higher security.
 }
 ```
 
-### PKCS7 Federated Authentication
-
-Use PKCS7 attested document for authentication in cloud environments.
+### PKCS7 Federated Credential Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "PKCS7",
-        "applicationFederatedCredentialName": "your-pkcs7-credential-name",
+        "applicationFederatedCredentialName": "your_pkcs7_federated_credential_name",
         "clientDeployEnvironment": "ALIBABA_CLOUD_ECS"
     },
     "httpConfiguration": {
@@ -236,24 +199,22 @@ Use PKCS7 attested document for authentication in cloud environments.
 }
 ```
 
-### OIDC Federated Authentication
-
-Use OIDC token for authentication.
+### OIDC Federated Credential Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "OIDC",
-        "applicationFederatedCredentialName": "your-oidc-credential-name",
-        "clientDeployEnvironment": "KUBERNETES"
+        "applicationFederatedCredentialName": "your_oidc_federated_credential_name",
+        "clientDeployEnvironment": "KUBERNETES",
+        "oidcTokenFilePath": "/var/run/secrets/.../token",
+        "oidcTokenFilePathEnvVarName": "ENV_OIDC_TOKEN_FILE_PATH"
     },
     "httpConfiguration": {
         "connectTimeout": 5000,
@@ -262,25 +223,21 @@ Use OIDC token for authentication.
 }
 ```
 
-### PCA (X.509 Certificate) Authentication
-
-Use X.509 certificate for authentication.
+### PCA Federated Credential Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
-    "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "PCA",
         "applicationFederatedCredentialName": "your_pca_federated_credential_name",
-        "clientX509Certificate": "-----BEGIN CERTIFICATE-----\nxxx\n-----END CERTIFICATE-----",
-        "x509CertChains": "-----BEGIN CERTIFICATE-----\nxxx\n-----END CERTIFICATE-----",
+        "clientX509Certificate": "-----BEGIN CERTIFICATE-----\nxxxxxx\n-----END CERTIFICATE-----",
+        "x509CertChains": "-----BEGIN CERTIFICATE-----\nxxxxxx\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\nxxxxxx\n-----END CERTIFICATE-----",
         "privateKeyEnvVarName": "ENV_PRIVATE_KEY"
     },
     "httpConfiguration": {
@@ -290,21 +247,18 @@ Use X.509 certificate for authentication.
 }
 ```
 
-### Plugin Authentication
-
-Use plugin-based credential provider for authentication.
+### OpenAPI Authentication Configuration Example
 
 ```json
 {
-    "idaasInstanceId": "idaas_ue2jvisn35ea5lmthk267xxxxx",
-    "clientId": "app_mkv7rgt4d7i4u7zqtzev2mxxxx",
-    "issuer": "your-idaas-issuer-url",
-    "tokenEndpoint": "your-idaas-token-endpoint",
-    "scope": "your-requested-scope",
+    "idaasInstanceId": "idaas_xxx",
+    "clientId": "app_xxx",
+    "issuer": "https://xxx/api/v2/iauths_system/oauth2",
+    "tokenEndpoint": "https://xxx/api/v2/iauths_system/oauth2/token",
+    "scope": "api.example.com|read:file",
     "openApiEndpoint": "eiam.[region_id].aliyuncs.com",
-    "developerApiEndpoint": "eiam-developerapi.[region_id].aliyuncs.com",
     "authnConfiguration": {
-        "authenticationSubject": "CLIENT",
+        "identityType": "CLIENT",
         "authnMethod": "PLUGIN",
         "pluginName": "alibabacloudPluginCredentialProvider"
     },
@@ -315,15 +269,82 @@ Use plugin-based credential provider for authentication.
 }
 ```
 
+## Code Integration
+
+### SDK Initialization
+
+Read the configuration file specified during the environment setup phase and complete the IDaaS configuration initialization.
+
+```java
+IDaaSCredentialProviderFactory.init();
+```
+
+> **Important**:
+> - All SDK features depend on the `init()` initialization method, so the `init()` method must be completed first, otherwise getting `IDaaSCredentialProvider` will fail and cause business interruption.
+> - Initialization will check the configuration and obtain the Access Token for the scope specified in the configuration file. If the configuration is missing or incorrect, causing the Access Token acquisition to fail, it will directly report an error and cause business interruption.
+
+### Get Access Token
+
+1. Get IDaaS credentialProvider to obtain Access Token.
+
+   - Get IDaaS credentialProvider through no-argument constructor to obtain Access Token for the scope specified in the configuration file:
+
+     ```java
+     IDaaSCredentialProvider credentialProvider = IDaaSCredentialProviderFactory.getIDaaSCredentialProvider();
+     ```
+
+   - Get IDaaS credentialProvider through parameterized constructor, scope can be specified to obtain Access Token for the specified scope. Format is `audience|scope`, corresponding to the audience identifier and permission identifier of the M2M server application to access:
+
+     ```java
+     IDaaSCredentialProvider credentialProvider = IDaaSCredentialProviderFactory.getIDaaSCredentialProvider(scope);
+     ```
+
+2. Access Token is of Bearer type, obtained through the `getBearerToken()` method of credentialProvider:
+
+   ```java
+   String accessToken = credentialProvider.getBearerToken();
+   ```
+
+### Code Example
+
+For complete examples, see the `samples/` directory:
+
+- `samples/ObtainTokenSample.java` - Get Access Token example
+
+```java
+public class ObtainTokenSample {
+
+    public static void main(String[] args) {
+
+        // Initialize the factory with configuration
+        IDaaSCredentialProviderFactory.init();
+
+        // Get credential provider with scope from config file
+        // IDaaSCredentialProvider credentialProvider =
+        //         IDaaSCredentialProviderFactory.getIDaaSCredentialProvider();
+
+        // scope format: <audience>|<scope>
+        String scope = "api.example.com|read:file";
+        // Get credential provider with scope specified by parameter
+        IDaaSCredentialProvider credentialProvider =
+                IDaaSCredentialProviderFactory.getIDaaSCredentialProvider(scope);
+
+        String accessToken = credentialProvider.getBearerToken();
+
+        System.out.println(accessToken);
+    }
+}
+```
+
 ## Token Exchange
 
-Token Exchange (RFC 8693) allows you to exchange a subject token for a new access token with different scope or audience. This is useful for token downscoping and service-to-service access scenarios.
+Token Exchange (RFC 8693) allows you to exchange a subject token for a new access token with different scopes or audiences. This is useful for token downgrading and service-to-service access scenarios.
 
 ### Basic Token Exchange
 
-For working examples, see the `samples/` directory:
+For complete examples, see the `samples/` directory:
 
-- `samples/TokenExchangeSample.java` - Token Exchange sample
+- `samples/TokenExchangeSample.java` - Token exchange example
 
 ```java
 import com.cloud_idaas.core.factory.IDaaSCredentialProviderFactory;
@@ -340,17 +361,17 @@ public class TokenExchangeSample {
         // The subject token to exchange
         String subjectToken = "";
 
-        //  Get Token Exchange credential provider with scope from config file
+        // Get token exchange credential provider with scope from config file
         // IDaaSTokenExchangeCredentialProvider tokenExchangeCredentialProvider =
         //                IDaaSCredentialProviderFactory.getIDaaSTokenExchangeCredentialProvider();
 
         // scope format: <audience>|<scope>
         String scope = "api.example.com|read:file";
-        // Get Token Exchange credential provider with scope specified by parameter
+        // Get token exchange credential provider with scope specified by parameter
         IDaaSTokenExchangeCredentialProvider tokenExchangeCredentialProvider =
                 IDaaSCredentialProviderFactory.getIDaaSTokenExchangeCredentialProvider(scope);
 
-        // perform token exchange
+        // Perform token exchange
         String accessToken = tokenExchangeCredentialProvider.getIssuedToken(
                 subjectToken,
                 OAuth2Constants.ACCESS_TOKEN_TYPE,
@@ -364,33 +385,21 @@ public class TokenExchangeSample {
 
 ### Token Exchange Parameters
 
-| Parameter | Type   | Required | Description |
-|-----------|--------|----------|-------------|
-| subject_token | String | Yes | The token to be exchanged |
-| subject_token_type | String | Yes | Type of the subject token (e.g., `urn:ietf:params:oauth:token-type:access_token`) |
-| requested_token_type | String | No | Type of token requested (defaults to access token) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| subject_token | String | Yes | The token to exchange |
+| subject_token_type | String | Yes | Subject token type (e.g., `urn:ietf:params:oauth:token-type:access_token`) |
+| requested_token_type | String | No | Requested token type (default is access token) |
 
 ### Use Cases
 
-1. **Token Downscoping**: Exchange a token with broader permissions for one with limited scope
-2. **Service-to-Service Access**: Transfer the same user identity across services to obtain the required access token
-
-### Supported Authentication Methods
-Token Exchange supports the following authentication methods:
-- `CLIENT_SECRET_BASIC` - Client secret in HTTP Basic Auth header
-- `CLIENT_SECRET_POST` - Client secret in request body
-- `CLIENT_SECRET_JWT` - JWT assertion signed with client secret
-- `PRIVATE_KEY_JWT` - JWT assertion signed with private key
-- `PKCS7` - PKCS7 attested document
-- `OIDC` - OIDC token
-- `PCA` - X.509 certificate authentication
-
-**Note**: `PLUGIN` authentication method is currently not supported for Token Exchange.
+1. **Token Downgrading**: Exchange a token with broader permissions for a token with limited scope
+2. **Service-to-Service Access**: Pass the same user identity between services to obtain the required access token
 
 ## Support and Feedback
 
 - **Email**: cloudidaas@list.alibaba-inc.com
-- **Issues**: Please submit an Issue for questions or suggestions
+- **Issue Feedback**: If you have questions or suggestions, please submit an Issue
 
 ## License
 

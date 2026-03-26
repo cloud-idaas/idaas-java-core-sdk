@@ -79,7 +79,9 @@ public class IDaaSCredentialProviderFactory {
             HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER.getOidcToken();
         }
         CREDENTIAL_PROVIDERS.computeIfAbsent(IDAAS_CLIENT_CONFIG.getScope(), IDaaSCredentialProviderFactory::createCredentialProvider);
-        TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS.computeIfAbsent(IDAAS_CLIENT_CONFIG.getScope(), IDaaSCredentialProviderFactory::createTokenExchangeCredentialProvider);
+        if (authenticationConfiguration.getAuthnMethod() != TokenAuthnMethod.PLUGIN){
+            TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS.computeIfAbsent(IDAAS_CLIENT_CONFIG.getScope(), IDaaSCredentialProviderFactory::createTokenExchangeCredentialProvider);
+        }
     }
 
     public synchronized static void init(IDaaSClientConfig authenticationConfig) {
@@ -293,8 +295,8 @@ public class IDaaSCredentialProviderFactory {
                 tokenExchangeProvider.setClientAssertionProvider(clientAssertionProvider);
                 break;
             case PLUGIN:
-                tokenExchangeProvider.setPluginName(authnConfig.getPluginName());
-                break;
+                throw new ConfigException(ErrorCode.UNSUPPORTED_AUTHENTICATION_METHOD.getCode(),
+                        String.format("Unsupported authentication method: %s for token exchange", authnMethod));
             default:
                 throw new ConfigException(ErrorCode.UNSUPPORTED_AUTHENTICATION_METHOD.getCode(), "Unsupported authentication method:" + authnMethod);
         }

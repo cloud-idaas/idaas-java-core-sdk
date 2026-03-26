@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>idaas-java-core-sdk</artifactId>
-    <version>0.0.4-beta</version>
+    <version>0.0.5-beta</version>
     <packaging>jar</packaging>
 
     <name>idaas-java-core-sdk</name>
