@@ -50,8 +50,8 @@ public class IDaaSCredentialProviderFactory {
         final String configContent = ConfigReader.getConfigAsString();
         try {
             IDAAS_CLIENT_CONFIG.assign(JSONUtil.parseObject(configContent, IDaaSClientConfig.class));
-            validateClientConfig(IDAAS_CLIENT_CONFIG);
-            validateHttpConfig(IDAAS_CLIENT_CONFIG.getHttpConfiguration());
+            validateConfig(IDAAS_CLIENT_CONFIG);
+            normalizeConfig(IDAAS_CLIENT_CONFIG);
             INITIALIZED.set(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -91,21 +91,22 @@ public class IDaaSCredentialProviderFactory {
         }
 
         IDAAS_CLIENT_CONFIG.assign(authenticationConfig);
-        validateClientConfig(IDAAS_CLIENT_CONFIG);
-        validateHttpConfig(IDAAS_CLIENT_CONFIG.getHttpConfiguration());
+        validateConfig(IDAAS_CLIENT_CONFIG);
+        normalizeConfig(IDAAS_CLIENT_CONFIG);
         INITIALIZED.set(true);
     }
 
-    private static void validateClientConfig(IDaaSClientConfig clientConfig) {
+    private static void validateConfig(IDaaSClientConfig clientConfig) {
         ValidatorUtil.validateBaseConfig(clientConfig);
         if (clientConfig.getAuthnConfiguration().getIdentityType() == AuthenticationIdentityEnum.HUMAN) {
             ValidatorUtil.validateHumanConfig(clientConfig);
         }
         ValidatorUtil.validateClientConfig(clientConfig);
+        ValidatorUtil.validateHttpConfig(clientConfig.getHttpConfiguration());
     }
 
-    private static void validateHttpConfig(HttpConfiguration httpConfiguration) {
-        ValidatorUtil.validateHttpConfig(httpConfiguration);
+    private static void normalizeConfig(IDaaSClientConfig clientConfig) {
+        NormalizeUtil.normalizeEndpoints(clientConfig);
     }
 
     public static IDaaSCredentialProvider getIDaaSCredentialProvider() {

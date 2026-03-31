@@ -1,3 +1,7 @@
+version: 0.0.6-beta
+Standardize endpoint format
+version: 0.0.5-beta
+staticIDaaSCredentialProvider support
 version: 0.0.4-beta
 Token Exchange support
 Fix bug:

@@ -108,7 +108,7 @@ class RequestUtilTest {
         queries.put("key1", "value1");
         queries.put("key2", "value2");
 
-        String url = RequestUtil.composeUrl("example.com", "/path", queries, "https");
+        String url = RequestUtil.composeUrl("https://example.com", "/path", queries);
 
         assertNotNull(url);
         assertTrue(url.startsWith("https://example.com/path?"));
@@ -122,10 +122,10 @@ class RequestUtilTest {
         Map<String, String> queries = new HashMap<>();
         queries.put("key", "value");
 
-        String url = RequestUtil.composeUrl("example.com", null, queries, "http");
+        String url = RequestUtil.composeUrl("https://example.com", null, queries);
 
         assertNotNull(url);
-        assertTrue(url.startsWith("http://example.com?"));
+        assertTrue(url.startsWith("https://example.com?"));
     }
 
     @Test
@@ -134,7 +134,7 @@ class RequestUtilTest {
         Map<String, String> queries = new HashMap<>();
         queries.put("key", "value");
 
-        String url = RequestUtil.composeUrl("example.com", "", queries, "http");
+        String url = RequestUtil.composeUrl("https://example.com", "", queries);
 
         assertNotNull(url);
     }
@@ -146,7 +146,7 @@ class RequestUtilTest {
         queries.put("key", "value with spaces");
         queries.put("special", "a+b=c");
 
-        String url = RequestUtil.composeUrl("example.com", "/path", queries, "https");
+        String url = RequestUtil.composeUrl("https://example.com", "/path", queries);
 
         assertNotNull(url);
         assertTrue(url.contains("value+with+spaces") || url.contains("value%20with%20spaces"));
@@ -157,9 +157,9 @@ class RequestUtilTest {
     void composeUrl_WithEmptyQueries_ShouldReturnBaseUrl() {
         Map<String, String> queries = new HashMap<>();
 
-        String url = RequestUtil.composeUrl("example.com", "/path", queries, "https");
+        String url = RequestUtil.composeUrl("https://example.com", "/path", queries);
 
         assertNotNull(url);
-        assertTrue(url.startsWith("https://example.com/path?"));
+        assertTrue(url.startsWith("https://example.com/path"));
     }
 }

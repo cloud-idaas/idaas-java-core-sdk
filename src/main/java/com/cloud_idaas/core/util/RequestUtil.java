@@ -66,14 +66,13 @@ public class RequestUtil {
         return sb.toString();
     }
 
-    public static String composeUrl(String endpoint, String path, Map<String, String> queries, String protocol) {
+    public static String composeUrl(String endpoint, String path, Map<String, String> queries) {
         StringBuilder urlBuilder = new StringBuilder("");
-        urlBuilder.append(protocol);
-        urlBuilder.append("://").append(endpoint);
+        urlBuilder.append(endpoint);
         if (path != null) {
             urlBuilder.append(path);
         }
-        urlBuilder.append("?");
+
         StringBuilder builder = new StringBuilder("");
 
         try {
@@ -93,6 +92,10 @@ public class RequestUtil {
         String query = builder.toString();
         if (query.endsWith("&")) {
             query = query.substring(0, query.length() - 1);
+        }
+
+        if (!query.isEmpty()) {
+            urlBuilder.append("?");
         }
 
         return urlBuilder.append(query).toString();

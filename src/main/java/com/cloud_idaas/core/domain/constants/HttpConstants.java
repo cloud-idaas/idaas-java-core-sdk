@@ -2,7 +2,11 @@ package com.cloud_idaas.core.domain.constants;
 
 public interface HttpConstants {
 
+    String HTTP = "http";
+
     String HTTPS = "https";
+
+    String SCHEME_SEPARATOR = "://";
 
     String AUTHORIZATION_HEADER = "Authorization";
 
