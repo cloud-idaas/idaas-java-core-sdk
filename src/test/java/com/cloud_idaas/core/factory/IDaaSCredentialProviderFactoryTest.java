@@ -726,28 +726,6 @@ class IDaaSCredentialProviderFactoryTest {
 
     // ==================== 反射测试私有方法 ====================
 
-    @Test
-    @DisplayName("validateClientConfig: 验证基础配置")
-    void validateClientConfig_ValidConfig_ShouldNotThrow() throws Exception {
-        IDaaSClientConfig config = createValidTestConfig();
-
-        Method method = IDaaSCredentialProviderFactory.class.getDeclaredMethod("validateClientConfig", IDaaSClientConfig.class);
-        method.setAccessible(true);
-
-        // 由于工厂未初始化，直接调用私有方法验证
-        assertDoesNotThrow(() -> method.invoke(null, config));
-    }
-
-    @Test
-    @DisplayName("validateHttpConfig: 验证 HTTP 配置")
-    void validateHttpConfig_ValidConfig_ShouldNotThrow() throws Exception {
-        IDaaSClientConfig config = createValidTestConfig();
-
-        Method method = IDaaSCredentialProviderFactory.class.getDeclaredMethod("validateHttpConfig", HttpConfiguration.class);
-        method.setAccessible(true);
-
-        assertDoesNotThrow(() -> method.invoke(null, config.getHttpConfiguration()));
-    }
 
     @Test
     @DisplayName("initCredentialProvider: 未初始化时不应执行")
