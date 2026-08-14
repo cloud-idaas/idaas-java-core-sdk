@@ -21,8 +21,10 @@ public class IdentityAuthenticationConfiguration implements Serializable {
     private String clientSecretEnvVarName;
 
     /**
-     * When authentication method is private_key_jwt,
+     * When authentication method is private_key_jwt or pca,
      * it is supported to use environment variable to get private_key.
+     * If the environment variable is not set, falls back to JVM system property
+     * (e.g., -D&lt;privateKeyEnvVarName&gt;=...).
      */
     private String privateKeyEnvVarName;
 

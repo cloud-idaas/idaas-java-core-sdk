@@ -1,3 +1,6 @@
+version: 0.0.7-beta
+Support dynamic initialization with specified config file path: init(String configPath)
+Support re-initialization via reset() method
 version: 0.0.6-beta
 Standardize endpoint format
 version: 0.0.5-beta

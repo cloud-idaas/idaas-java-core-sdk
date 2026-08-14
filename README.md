@@ -29,7 +29,7 @@ Add the following dependency in `pom.xml` via Maven:
     <groupId>com.cloud-idaas</groupId>
     <artifactId>idaas-java-core-sdk</artifactId>
     <!-- Please replace with the latest SDK version -->
-    <version>0.0.4-beta</version>
+    <version>0.0.7-beta</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ For scenarios like Function Compute (FC), IDaaS supports OpenAPI authentication 
 
 The default path for the configuration file is: `~/.cloud_idaas/client-config.json`. If not explicitly specified, the configuration file will be loaded from this path by default.
 
-You can specify the configuration file path via Java system property or environment variable:
+You can specify the configuration file path via Java system property, environment variable, or initialization parameter:
 
 - Java system property name: `cloud_idaas_config_path`
 - Environment variable name: `CLOUD_IDAAS_CONFIG_PATH`
@@ -70,6 +70,12 @@ You can specify the configuration file path via Java system property or environm
 
 ```
 CLOUD_IDAAS_CONFIG_PATH=/.../client-config.json
+```
+
+### Initialization Parameter Example
+
+```java
+IDaaSCredentialProviderFactory.init("/.../client-config.json");
 ```
 
 ## Configuration File Description

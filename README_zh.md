@@ -29,7 +29,7 @@ IDaaS（身份即服务）M2M 产品的 Java SDK，为开发者提供便捷的�
     <groupId>com.cloud-idaas</groupId>
     <artifactId>idaas-java-core-sdk</artifactId>
     <!--以下版本号请替换为 SDK 的最新版本号-->
-    <version>0.0.4-beta</version>
+    <version>0.0.7-beta</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ IDaaS（身份即服务）M2M 产品的 Java SDK，为开发者提供便捷的�
 
 配置文件的默认路径：`~/.cloud_idaas/client-config.json`。如未明确指定，则默认从该路径下获取配置文件。
 
-可以通过 Java 系统属性或环境变量指定配置文件路径：
+可以通过 Java 系统属性、环境变量或初始化参数指定配置文件路径：
 
 - Java 系统属性名：`cloud_idaas_config_path`
 - 环境变量名：`CLOUD_IDAAS_CONFIG_PATH`
@@ -70,6 +70,12 @@ IDaaS（身份即服务）M2M 产品的 Java SDK，为开发者提供便捷的�
 
 ```
 CLOUD_IDAAS_CONFIG_PATH=/.../client-config.json
+```
+
+### 初始化参数示例
+
+```java
+IDaaSCredentialProviderFactory.init("/.../client-config.json");
 ```
 
 ## 配置文件说明

@@ -42,12 +42,29 @@ public class IDaaSCredentialProviderFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IDaaSCredentialProviderFactory.class);
 
+    /**
+     * Initialize with the config file resolved from the JVM parameter, the environment variable or the default path.
+     *
+     * <p>Repeated invocations are ignored. Call {@link #reset()} first to re-initialize with another configuration.
+     */
     public synchronized static void init() {
+        init((String) null);
+    }
+
+    /**
+     * Initialize with the config file located at the specified path.
+     *
+     * <p>Repeated invocations are ignored. Call {@link #reset()} first to re-initialize with another configuration.
+     *
+     * @param configPath config file path. When null or blank, falls back to the JVM parameter,
+     *                   the environment variable and then the default path
+     */
+    public synchronized static void init(String configPath) {
         if (INITIALIZED.get()) {
             LOGGER.info("IDaaS Credential Provider Factory has been initialized.");
             return;
         }
-        final String configContent = ConfigReader.getConfigAsString();
+        final String configContent = ConfigReader.getConfigAsString(configPath);
         try {
             IDAAS_CLIENT_CONFIG.assign(JSONUtil.parseObject(configContent, IDaaSClientConfig.class));
             validateConfig(IDAAS_CLIENT_CONFIG);
@@ -84,6 +101,13 @@ public class IDaaSCredentialProviderFactory {
         }
     }
 
+    /**
+     * Initialize with the configuration passed in at runtime.
+     *
+     * <p>Repeated invocations are ignored. Call {@link #reset()} first to re-initialize with another configuration.
+     *
+     * @param authenticationConfig the client configuration to initialize with
+     */
     public synchronized static void init(IDaaSClientConfig authenticationConfig) {
         if (INITIALIZED.get()) {
             LOGGER.info("IDaaS Credential Provider Factory has been initialized.");
@@ -94,6 +118,23 @@ public class IDaaSCredentialProviderFactory {
         validateConfig(IDAAS_CLIENT_CONFIG);
         normalizeConfig(IDAAS_CLIENT_CONFIG);
         INITIALIZED.set(true);
+    }
+
+    /**
+     * Reset the factory back to the uninitialized state, so that a subsequent {@code init} call can
+     * apply another configuration.
+     *
+     * <p>The cached configuration and all cached credential providers are discarded, which means the
+     * providers are rebuilt from the new configuration on the next {@code get} call. Provider instances
+     * already handed out to callers keep the configuration they were built with, so callers must obtain
+     * providers again after re-initializing.
+     */
+    public synchronized static void reset() {
+        INITIALIZED.set(false);
+        IDAAS_CLIENT_CONFIG.assign(new IDaaSClientConfig());
+        CREDENTIAL_PROVIDERS.clear();
+        TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS.clear();
+        HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER = null;
     }
 
     private static void validateConfig(IDaaSClientConfig clientConfig) {
@@ -149,7 +190,7 @@ public class IDaaSCredentialProviderFactory {
                 break;
             case PRIVATE_KEY_JWT:
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
-                privateKeyString = System.getenv(privateKeyEnvVarName);
+                privateKeyString = StringUtil.defaultIfBlank(System.getenv(privateKeyEnvVarName), System.getProperty(privateKeyEnvVarName));
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
@@ -190,7 +231,7 @@ public class IDaaSCredentialProviderFactory {
                 credentialProvider.setClientX509Certificate(authnConfig.getClientX509Certificate());
                 credentialProvider.setX509CertChains(authnConfig.getX509CertChains());
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
-                privateKeyString = System.getenv(privateKeyEnvVarName);
+                privateKeyString = StringUtil.defaultIfBlank(System.getenv(privateKeyEnvVarName), System.getProperty(privateKeyEnvVarName));
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
@@ -247,7 +288,7 @@ public class IDaaSCredentialProviderFactory {
                 break;
             case PRIVATE_KEY_JWT:
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
-                privateKeyString = System.getenv(privateKeyEnvVarName);
+                privateKeyString = StringUtil.defaultIfBlank(System.getenv(privateKeyEnvVarName), System.getProperty(privateKeyEnvVarName));
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());
@@ -288,7 +329,7 @@ public class IDaaSCredentialProviderFactory {
                 tokenExchangeProvider.setClientX509Certificate(authnConfig.getClientX509Certificate());
                 tokenExchangeProvider.setX509CertChains(authnConfig.getX509CertChains());
                 privateKeyEnvVarName = authnConfig.getPrivateKeyEnvVarName();
-                privateKeyString = System.getenv(privateKeyEnvVarName);
+                privateKeyString = StringUtil.defaultIfBlank(System.getenv(privateKeyEnvVarName), System.getProperty(privateKeyEnvVarName));
                 clientAssertionProvider = new StaticPrivateKeyAssertionProvider(privateKeyString);
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setClientId(IDAAS_CLIENT_CONFIG.getClientId());
                 ((StaticPrivateKeyAssertionProvider)clientAssertionProvider).setTokenEndpoint(IDAAS_CLIENT_CONFIG.getTokenEndpoint());

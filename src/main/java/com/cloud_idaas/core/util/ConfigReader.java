@@ -42,15 +42,43 @@ public class ConfigReader {
     }
 
     /**
+     * Get the configuration file path (priority: specified path > JVM parameter > environment variable)
+     *
+     * @param specifiedPath Explicitly specified configuration file path, ignored when null or blank
+     * @return Configuration file path
+     */
+    private static String getConfigPath(String specifiedPath) {
+
+        // The explicitly specified path takes the highest priority
+        if (specifiedPath != null && !specifiedPath.trim().isEmpty()) {
+            return specifiedPath;
+        }
+
+        return getConfigPath();
+    }
+
+    /**
      * Load specified configuration file content as string based on JVM parameters and environment variables
      *
      * @return Configuration file content as string
      * @throws ConfigException Thrown when configuration file does not exist or fails to read
      */
     public static String getConfigAsString() {
+        return getConfigAsString(null);
+    }
+
+    /**
+     * Load configuration file content as string from the specified path
+     *
+     * @param specifiedPath Configuration file path. When null or blank, falls back to the JVM parameter,
+     *                      the environment variable and then the default path
+     * @return Configuration file content as string
+     * @throws ConfigException Thrown when configuration file does not exist or fails to read
+     */
+    public static String getConfigAsString(String specifiedPath) {
 
         // Get the configuration file path
-        String configPath = getConfigPath();
+        String configPath = getConfigPath(specifiedPath);
         if (configPath.trim().isEmpty()) {
             throw new ConfigException(ErrorCode.LOAD_CONFIG_FILE_FAILED.getCode(), "IDaaS config not specified. Please using jvm -D" +
                     ConfigPathConstants.JVM_CONFIG_PATH_KEY + " or environment variables " + ConfigPathConstants.ENV_CONFIG_PATH_KEY + " specified.");

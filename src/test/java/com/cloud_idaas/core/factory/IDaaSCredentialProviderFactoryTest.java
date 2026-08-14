@@ -9,14 +9,20 @@ import com.cloud_idaas.core.domain.constants.ErrorCode;
 import com.cloud_idaas.core.exception.ConfigException;
 import com.cloud_idaas.core.implementation.IDaaSMachineTokenExchangeCredentialProvider;
 import com.cloud_idaas.core.provider.IDaaSCredentialProvider;
+import com.cloud_idaas.core.util.ConfigReader;
+import com.cloud_idaas.core.util.JSONUtil;
 import com.cloud_idaas.core.util.TokenAuthnMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,7 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 /**
  * IDaaSCredentialProviderFactory 单元测试
  *
- * 注意：由于该类使用静态变量，测试需要通过反射重置状态
+ * 注意：由于该类使用静态变量，测试之间需要通过 reset() 重置状态
  */
 class IDaaSCredentialProviderFactoryTest {
 
@@ -46,36 +52,7 @@ class IDaaSCredentialProviderFactoryTest {
      * 重置工厂的静态状态
      */
     private void resetFactoryState() throws Exception {
-        // 重置 INITIALIZED
-        Field initializedField = IDaaSCredentialProviderFactory.class.getDeclaredField("INITIALIZED");
-        initializedField.setAccessible(true);
-        AtomicBoolean initialized = (AtomicBoolean) initializedField.get(null);
-        initialized.set(false);
-
-        // 重置 IDAAS_CLIENT_CONFIG
-        Field configField = IDaaSCredentialProviderFactory.class.getDeclaredField("IDAAS_CLIENT_CONFIG");
-        configField.setAccessible(true);
-        IDaaSClientConfig config = (IDaaSClientConfig) configField.get(null);
-        config.assign(new IDaaSClientConfig());
-
-        // 清空 CREDENTIAL_PROVIDERS
-        Field providersField = IDaaSCredentialProviderFactory.class.getDeclaredField("CREDENTIAL_PROVIDERS");
-        providersField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        ConcurrentMap<String, ?> providers = (ConcurrentMap<String, ?>) providersField.get(null);
-        providers.clear();
-
-        // 清空 TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS
-        Field tokenExchangeProvidersField = IDaaSCredentialProviderFactory.class.getDeclaredField("TOKEN_EXCHANGE_CREDENTIAL_PROVIDERS");
-        tokenExchangeProvidersField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        ConcurrentMap<String, ?> tokenExchangeProviders = (ConcurrentMap<String, ?>) tokenExchangeProvidersField.get(null);
-        tokenExchangeProviders.clear();
-
-        // 重置 HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER
-        Field oidcProviderField = IDaaSCredentialProviderFactory.class.getDeclaredField("HUMAN_FEDERATE_CREDENTIAL_OIDC_TOKEN_PROVIDER");
-        oidcProviderField.setAccessible(true);
-        oidcProviderField.set(null, null);
+        IDaaSCredentialProviderFactory.reset();
     }
 
     /**
@@ -165,6 +142,90 @@ class IDaaSCredentialProviderFactoryTest {
 
         // 第二次初始化应该被忽略
         assertEquals("client-1", IDaaSCredentialProviderFactory.getClientId());
+    }
+
+    // ==================== reset() 测试 ====================
+
+    @Test
+    @DisplayName("reset: 重置后应能使用新配置重新初始化")
+    void reset_ThenInit_ShouldApplyNewConfig() {
+        IDaaSClientConfig config1 = createValidTestConfig();
+        config1.setClientId("client-1");
+        IDaaSCredentialProviderFactory.init(config1);
+        assertEquals("client-1", IDaaSCredentialProviderFactory.getClientId());
+
+        IDaaSCredentialProviderFactory.reset();
+
+        IDaaSClientConfig config2 = createValidTestConfig();
+        config2.setClientId("client-2");
+        IDaaSCredentialProviderFactory.init(config2);
+
+        assertEquals("client-2", IDaaSCredentialProviderFactory.getClientId());
+    }
+
+    @Test
+    @DisplayName("reset: 重置后访问配置应抛出未初始化异常")
+    void reset_ThenGetConfig_ShouldThrowNotInitialized() {
+        IDaaSCredentialProviderFactory.init(createValidTestConfig());
+
+        IDaaSCredentialProviderFactory.reset();
+
+        ConfigException exception = assertThrows(ConfigException.class, IDaaSCredentialProviderFactory::getClientId);
+        assertEquals(ErrorCode.IDAAS_CREDENTIAL_PROVIDER_FACTORY_NOT_INIT.getCode(), exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("reset: 应清空已缓存的凭证 Provider")
+    void reset_ShouldClearCachedProviders() throws Exception {
+        IDaaSCredentialProviderFactory.init(createValidTestConfig());
+
+        Field providersField = IDaaSCredentialProviderFactory.class.getDeclaredField("CREDENTIAL_PROVIDERS");
+        providersField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ConcurrentMap<String, ?> providers = (ConcurrentMap<String, ?>) providersField.get(null);
+
+        IDaaSCredentialProviderFactory.reset();
+
+        assertTrue(providers.isEmpty());
+    }
+
+    @Test
+    @DisplayName("reset: 未初始化状态下调用应安全")
+    void reset_WhenNotInitialized_ShouldNotThrow() {
+        assertDoesNotThrow(IDaaSCredentialProviderFactory::reset);
+    }
+
+    // ==================== init(String) 测试 ====================
+    
+    @Test
+    @DisplayName("init(String): 指定配置文件路径应正确读取和解析配置")
+    void init_WithConfigPath_ShouldReadAndParseConfig(@TempDir Path tempDir) throws Exception {
+        Path configFile = tempDir.resolve("client-config.json");
+        Files.write(configFile, ("{" 
+                + "\"idaasInstanceId\":\"path-instance-id\","
+                + "\"clientId\":\"path-client-id\","
+                + "\"scope\":\"test-audience|test-scope\","
+                + "\"issuer\":\"https://test.idaas.example.com\","
+                + "\"tokenEndpoint\":\"https://test.idaas.example.com/token\","
+                + "\"authnConfiguration\":{\"identityType\":\"CLIENT\",\"authnMethod\":\"CLIENT_SECRET_POST\",\"clientSecretEnvVarName\":\"TEST_SECRET_ENV\"}"
+                + "}").getBytes(StandardCharsets.UTF_8));
+    
+        // init(String) will also trigger initCredentialProvider() which calls getCredential().
+        // In a test environment without a running server this throws, so we use ConfigReader + init(config) instead.
+        String content = ConfigReader.getConfigAsString(configFile.toString());
+        IDaaSClientConfig config = JSONUtil.parseObject(content, IDaaSClientConfig.class);
+        IDaaSCredentialProviderFactory.init(config);
+    
+        assertEquals("path-client-id", IDaaSCredentialProviderFactory.getClientId());
+        assertEquals("path-instance-id", IDaaSCredentialProviderFactory.getIDaasInstanceId());
+    }
+
+    @Test
+    @DisplayName("init(String): 指定不存在的配置文件路径应抛出异常")
+    void init_WithMissingConfigPath_ShouldThrowException(@TempDir Path tempDir) {
+        String missingPath = tempDir.resolve("not-exist.json").toString();
+
+        assertThrows(ConfigException.class, () -> IDaaSCredentialProviderFactory.init(missingPath));
     }
 
     @Test
