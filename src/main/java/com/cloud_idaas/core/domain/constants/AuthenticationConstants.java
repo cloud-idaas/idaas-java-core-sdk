@@ -14,6 +14,15 @@ public interface AuthenticationConstants {
      */
     String ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV = "ALIBABA_CLOUD_OIDC_TOKEN_FILE";
 
+    String ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH = "/var/run/secrets/ack.alibabacloud.com/rrsa-tokens/token";
+
+    /**
+     * @see "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+     */
+    String AWS_EKS_OIDC_TOKEN_PATH_ENV = "AWS_WEB_IDENTITY_TOKEN_FILE";
+
+    String AWS_EKS_OIDC_TOKEN_DEFAULT_PATH = "/var/run/secrets/eks.amazonaws.com/serviceaccount/token";
+
     /**
      * default client id environment variable name
      */

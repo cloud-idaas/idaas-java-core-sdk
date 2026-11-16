@@ -32,7 +32,7 @@ public class AlibabaCloudEcsAttestedDocumentProvider extends AbstractRefreshedCr
 
     private long defaultDocumentEffectiveSeconds = 3600L;
 
-    private static final HttpClient HTTP_CLIENT = HttpClientFactory.getDefaultHttpClient();
+    private static final HttpClient HTTP_CLIENT = request -> HttpClientFactory.getDefaultHttpClient().send(request);
 
     protected AlibabaCloudEcsAttestedDocumentProvider(AlibabaCloudEcsAttestedDocumentProviderBuilder builder) {
         super(builder);

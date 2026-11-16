@@ -100,6 +100,10 @@ class HttpConstantsTest {
         assertNotNull(HttpConstants.REDIRECT_TO);
         assertNotNull(HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN_TTL_SECONDS);
         assertNotNull(HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN);
+        assertNotNull(HttpConstants.X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS);
+        assertNotNull(HttpConstants.X_AWS_EC2_METADATA_TOKEN);
+        assertNotNull(HttpConstants.GCP_METADATA_FLAVOR);
+        assertNotNull(HttpConstants.GCP_METADATA_FLAVOR_VALUE);
         assertNotNull(HttpConstants.COLON);
         assertNotNull(HttpConstants.SPACE);
     }
@@ -117,6 +121,10 @@ class HttpConstantsTest {
         assertFalse(HttpConstants.REDIRECT_TO.isEmpty());
         assertFalse(HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN_TTL_SECONDS.isEmpty());
         assertFalse(HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN.isEmpty());
+        assertFalse(HttpConstants.X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS.isEmpty());
+        assertFalse(HttpConstants.X_AWS_EC2_METADATA_TOKEN.isEmpty());
+        assertFalse(HttpConstants.GCP_METADATA_FLAVOR.isEmpty());
+        assertFalse(HttpConstants.GCP_METADATA_FLAVOR_VALUE.isEmpty());
         assertFalse(HttpConstants.COLON.isEmpty());
         assertFalse(HttpConstants.SPACE.isEmpty());
     }
@@ -166,6 +174,44 @@ class HttpConstantsTest {
                 .startsWith("X-aliyun-ecs-metadata-token"));
     }
 
+    // ==================== AWS EC2 特定常量测试 ====================
+
+    @Test
+    @DisplayName("X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS 应正确")
+    void xAwsEc2MetadataTokenTtlSeconds_ShouldBeCorrect() {
+        assertEquals("X-aws-ec2-metadata-token-ttl-seconds",
+                HttpConstants.X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS);
+    }
+
+    @Test
+    @DisplayName("X_AWS_EC2_METADATA_TOKEN 应正确")
+    void xAwsEc2MetadataToken_ShouldBeCorrect() {
+        assertEquals("X-aws-ec2-metadata-token", HttpConstants.X_AWS_EC2_METADATA_TOKEN);
+    }
+
+    @Test
+    @DisplayName("AWS EC2 元数据相关常量应包含正确前缀")
+    void awsEc2MetadataConstants_ShouldContainCorrectPrefix() {
+        assertTrue(HttpConstants.X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS
+                .startsWith("X-aws-ec2-metadata-token"));
+        assertTrue(HttpConstants.X_AWS_EC2_METADATA_TOKEN
+                .startsWith("X-aws-ec2-metadata-token"));
+    }
+
+    // ==================== GCP 特定常量测试 ====================
+
+    @Test
+    @DisplayName("GCP_METADATA_FLAVOR 应正确")
+    void gcpMetadataFlavor_ShouldBeCorrect() {
+        assertEquals("Metadata-Flavor", HttpConstants.GCP_METADATA_FLAVOR);
+    }
+
+    @Test
+    @DisplayName("GCP_METADATA_FLAVOR_VALUE 应正确")
+    void gcpMetadataFlavorValue_ShouldBeCorrect() {
+        assertEquals("Google", HttpConstants.GCP_METADATA_FLAVOR_VALUE);
+    }
+
     // ==================== 唯一性测试 ====================
 
     @Test
@@ -182,6 +228,10 @@ class HttpConstantsTest {
             HttpConstants.REDIRECT_TO,
             HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN_TTL_SECONDS,
             HttpConstants.X_ALIYUN_ECS_METADATA_TOKEN,
+            HttpConstants.X_AWS_EC2_METADATA_TOKEN_TTL_SECONDS,
+            HttpConstants.X_AWS_EC2_METADATA_TOKEN,
+            HttpConstants.GCP_METADATA_FLAVOR,
+            HttpConstants.GCP_METADATA_FLAVOR_VALUE,
             HttpConstants.COLON,
             HttpConstants.SPACE
         };

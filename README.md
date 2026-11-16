@@ -29,7 +29,7 @@ Add the following dependency in `pom.xml` via Maven:
     <groupId>com.cloud-idaas</groupId>
     <artifactId>idaas-java-core-sdk</artifactId>
     <!-- Please replace with the latest SDK version -->
-    <version>0.0.7-beta</version>
+    <version>0.0.8-beta</version>
 </dependency>
 ```
 
@@ -114,7 +114,7 @@ Configuration file example:
 | scope | Required, specifies the audience identifier and permission identifier of the M2M server application to access, format is `audience\|scope`. <br>For scenarios of obtaining STS Token or credentials of RAM roles hosted in IDaaS, it is fixed to `urn:cloud:idaas:pam\|.all`, representing the built-in scope of IDaaS. |
 | openApiEndpoint | Optional, IDaaS OpenAPI address, used when using OpenAPI authentication. Service address can be obtained from [IDaaS EIAM - Alibaba Cloud OpenAPI Developer Portal](https://api.aliyun.com/product/Eiam). <br>If the application is deployed in Alibaba Cloud VPC and in the same region as the IDaaS instance, it can be accessed via intranet VPC address, see VPC address in Alibaba Cloud OpenAPI Developer Portal. |
 | developerApiEndpoint | Optional, IDaaS DeveloperAPI address, used when obtaining STS Token or credentials of RAM roles hosted in IDaaS. Service address can be obtained from [IDaaS EIAM - Alibaba Cloud OpenAPI Developer Portal](https://api.aliyun.com/product/Eiam). <br>If the application is deployed in Alibaba Cloud VPC and in the same region as the IDaaS instance, it can be accessed via intranet VPC address, see VPC address in Alibaba Cloud OpenAPI Developer Portal. |
-| authnConfiguration | - identityType: Optional, default value is `CLIENT`, currently only supports `CLIENT`, meaning M2M client application authenticates with machine identity. <br>- authnMethod: Required, authentication method. Different authentication methods require different authnConfiguration fields, see **authnMethod Field Values and authnConfiguration Field Mapping** for details. |
+| authnConfiguration | - identityType: Optional, defaults to `CLIENT`; exact value `CLIENT` selects machine authentication and `HUMAN` selects interactive login. <br>- authnMethod: Required, authentication method. Different authentication methods require different authnConfiguration fields, see **authnMethod Field Values and authnConfiguration Field Mapping** for details. |
 | httpConfiguration | HTTP protocol related configuration, contains 2 fields: <br>- connectTimeout: Optional, maximum wait time for client to establish connection with server (milliseconds), default is 5000. <br>- readTimeout: Optional, maximum wait time for client to wait for server data after connection is established (milliseconds), default is 10000. |
 
 ### authnMethod Field Values and authnConfiguration Field Mapping
@@ -126,11 +126,11 @@ Configuration file example:
 | CLIENT_SECRET_JWT | clientSecretEnvVarName | Field value is the environment variable name, through which the M2M client application's Client Secret is read.                                                                                                                                                                                                          |
 | PRIVATE_KEY_JWT | privateKeyEnvVarName | Field value is the environment variable name, through which the M2M client application's Private Key is read.                                                                                                                                                                                                            |
 | PKCS7 | applicationFederatedCredentialName | PKCS7 federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                            |
-| PKCS7 | clientDeployEnvironment | Deployment environment, currently only supports `ALIBABA_CLOUD_ECS`.                                                                                                                                                                                                                                                     |
+| PKCS7 | clientDeployEnvironment | Deployment environment; supports `ALIBABA_CLOUD_ECS` and `AWS_EC2`. |
 | OIDC | applicationFederatedCredentialName | OIDC federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                             |
-| OIDC | clientDeployEnvironment | Deployment environment, currently only supports `KUBERNETES`.                                                                                                                                                                                                                                                            |
-| OIDC | oidcTokenFilePath | Optional, used to specify the Service Account Token file path. If not configured, it will try to read the path through the environment variable specified by oidcTokenFilePathEnvVarName; if both are not set, it will use the Kubernetes standard path by default: /var/run/secrets/kubernetes.io/serviceaccount/token. |
-| OIDC | oidcTokenFilePathEnvVarName | Optional, takes effect when oidcTokenFilePath is not specified, field value is the environment variable name, through which the Service Account Token file path is read.                                                                                                                                                 |
+| OIDC | clientDeployEnvironment | Deployment environment; supports `KUBERNETES`, `AWS_EKS`, `ALIBABA_CLOUD_ACK`, `GOOGLE_VM` and `COMPUTER` (reuses an initialized human interactive-login provider). |
+| OIDC | oidcTokenFilePath | Optional token path for file-backed OIDC identities. `KUBERNETES` falls back from an explicit path to `oidcTokenFilePathEnvVarName`, then `/var/run/secrets/kubernetes.io/serviceaccount/token`. EKS/ACK use their own platform variables and default paths; see “EKS configuration and factory retry” below. GCP uses metadata and COMPUTER reuses human login; neither uses this file setting. |
+| OIDC | oidcTokenFilePathEnvVarName | Optional for file-backed Kubernetes/EKS/ACK identities only. When `oidcTokenFilePath` is absent, names the environment variable containing the token path. Missing-variable handling and subsequent fallback depend on the environment; see the path-resolution details below. |
 | PCA | applicationFederatedCredentialName | PCA federated credential name. Federated trust source needs to be created in advance, related configuration can be referenced: Create Federated Credential.                                                                                                                                                              |
 | PCA | clientX509Certificate | End certificate, format: <br>`-----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE-----`                                                                                                                                                                                                                                 |
 | PCA | x509CertChains | Intermediate certificate list, multiple certificates are concatenated with newlines, format: <br>`-----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE----- -----BEGIN CERTIFICATE----- xxx -----END CERTIFICATE-----`                                                                                                   |
@@ -401,6 +401,59 @@ public class TokenExchangeSample {
 
 1. **Token Downgrading**: Exchange a token with broader permissions for a token with limited scope
 2. **Service-to-Service Access**: Pass the same user identity between services to obtain the required access token
+
+## EKS configuration and factory retry
+
+GCP VM OIDC authentication uses the configured issuer's origin (`scheme://host[:port]`) as its audience, excluding path, query and fragment.
+Allow this value in the IDaaS GCP OIDC trust source's audience list; configurations accepting only the IDaaS instance ID must add this origin.
+
+AWS EC2 identity authentication obtains `/latest/dynamic/instance-identity/rsa2048`
+through IMDSv2 and removes Base64 whitespace before submission. Configure the
+IDaaS trust source with the AWS RSA-2048 certificate for the instance's Region.
+
+For EKS OIDC authentication, use `"clientDeployEnvironment": "AWS_EKS"`.
+The removed `AWS_ESK` value produces an explicit migration hint during configuration-file initialization.
+Master/0.0.7 does not support the current EKS configuration and is not a direct rollback target that preserves EKS support.
+Keep a verified EKS-capable build; switching to generic Kubernetes OIDC requires separate validation of token paths,
+mounts, IDaaS trust settings and audience.
+Both ordinary credentials and Token Exchange use the same EKS path resolution:
+`oidcTokenFilePath`, then `oidcTokenFilePathEnvVarName`, then
+`AWS_WEB_IDENTITY_TOKEN_FILE`, then the default EKS token path. An explicitly
+configured path environment variable must exist and contain a nonblank value.
+ACK uses the same order with `ALIBABA_CLOUD_OIDC_TOKEN_FILE` and its own default path.
+Direct EKS/ACK builders also resolve explicit token paths before platform environment variables and platform defaults;
+blank platform variables are treated as unset. Existing Kubernetes path fallback is unchanged.
+
+When `identityType` is omitted it still defaults to `CLIENT`; when present it must be exactly `CLIENT` or `HUMAN`.
+Previously lowercase, unknown string or null values deserialized to null and skipped the HUMAN branch;
+requests could still proceed if the remaining settings supported machine authentication. Such configurations
+are now rejected during initialization. This check applies only at the factory initialization boundary
+(file-based `init` and null-enum validation in `init(config)`); generic Gson deserialization is unchanged
+and still maps unknown enum names to null.
+`authnMethod` also requires an exact enum name. Invalid names could previously fail with an NPE at
+provider creation; initialization now reports a configuration error instead. Omission still keeps the `NONE` default.
+PKCS7/OIDC case/whitespace variants of known environment names
+receive exact-name hints without normalization or acceptance. Other authentication methods continue ignoring
+irrelevant environment fields, except for the removed `AWS_ESK` migration diagnostic.
+Failed file initialization can be retried with the existing `init()` call.
+`reset()` discards factory state; providers already returned remain usable.
+After re-initialization, SDK OAuth and metadata requests use the new connect/read timeouts.
+Existing raw HTTP client references and in-flight requests are not forcibly closed.
+PKCS7 factory configuration accepts `ALIBABA_CLOUD_ECS` and `AWS_EC2`; other environments
+are rejected during initialization rather than failing later with a missing provider.
+Default STRICT credential caching rejects tokens past their known expiry, including refresh
+failures and lock timeouts. Direct Supplier users retain the existing ALLOW option.
+A newly fetched value already inside its prefetch window does not trigger another immediate prefetch for that version.
+It is reused until stale time, when normal refresh still runs; failed-fetch retries and hard-expiry checks remain active.
+Same-thread recursive creation of the same provider, including a scope dependency cycle, fails fast instead of self-waiting;
+acyclic delegation to a different scope remains supported. Configuration getters read a validated snapshot without waiting for file-initialization warm-up, including from plugin worker threads. Failed warm-up clears this read snapshot; subsequent reads fail until a validated retry configuration is published. A successful configuration query does not imply authentication success.
+File-based PLUGIN warm-up releases the factory monitor and supports acyclic different-scope provider delegation on existing worker threads. Provider lookup is therefore allowed during PLUGIN warm-up, as on master, and is not proof that the outer initialization has completed. Other authentication methods retain their initialization barrier.
+Concurrent `init` calls wait outside the monitor for PLUGIN warm-up to finish; callbacks must not synchronously wait for a worker calling `init`, or introduce cross-thread scope cycles. `reset` can supersede warm-up; old work cannot commit into the new generation.
+On a cold start with no successful HTTP configuration, workers may use an isolated candidate client. Failed warm-up detaches that candidate from future global lookups; raw references already obtained are not forcibly closed or revoked. When a successful HTTP configuration already exists, workers and other threads retain it until the new initialization commits. Initialization-thread timeout overrides remain thread-local. `getHttpConfig()` queries validated factory settings.
+Transport settings are copied after validation and the same frozen settings are used for warm-up and successful commit; mutating query results does not reconfigure
+transport. Use `reset()` followed by `init` to apply new timeouts. Transport snapshots and warm-up scopes are internal SDK bridges.
+Initialization supports both `init(String)` and `init(IDaaSClientConfig)`;
+use `init()` for the default configuration path instead of an ambiguous `init(null)` call.
 
 ## Support and Feedback
 

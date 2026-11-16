@@ -88,6 +88,7 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
         if (firstStartup.get()) {
             RefreshResult<IDaaSTokenResponse> localCacheResult = tryReuseLocalCache();
             if (localCacheResult != null) {
+                this.refreshResult = localCacheResult;
                 this.firstStartup.compareAndSet(true, false);
                 return localCacheResult;
             }
@@ -109,6 +110,7 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
             // it will lead to repeat calls and stack overflow.
             final String refreshToken = refreshResult.getValue().getRefreshToken();
             IDaaSTokenResponse tokenResponse = refreshToken(refreshToken);
+            preserveRefreshToken(tokenResponse, refreshToken);
             Instant staleTime = Instant.ofEpochSecond(tokenResponse.getExpiresAt() - TimeUnit.SECONDS.toSeconds(tokenResponse.getExpiresIn() / 5));
             Instant prefetchTime = Instant.ofEpochSecond(tokenResponse.getExpiresAt() - TimeUnit.SECONDS.toSeconds(tokenResponse.getExpiresIn() / 3));
             LOGGER.info("token refresh time: {}", Clock.systemUTC().instant().toEpochMilli());
@@ -132,6 +134,7 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
                 if (localToken.willSoonExpire()) {
                     final String refreshToken = localToken.getRefreshToken();
                     IDaaSTokenResponse tokenResponse = refreshToken(refreshToken);
+                    preserveRefreshToken(tokenResponse, refreshToken);
                     Instant staleTime = Instant.ofEpochSecond(tokenResponse.getExpiresAt() - TimeUnit.SECONDS.toSeconds(tokenResponse.getExpiresIn() / 5));
                     Instant prefetchTime = Instant.ofEpochSecond(tokenResponse.getExpiresAt() - TimeUnit.SECONDS.toSeconds(tokenResponse.getExpiresIn() / 3));
                     LOGGER.info("token refresh time: {}", Clock.systemUTC().instant().toString());
@@ -164,6 +167,13 @@ public class HumanFederatedOidcTokenProvider extends AbstractRefreshedCredential
             throw new CredentialException(ErrorCode.REFRESH_TOKEN_EMPTY.getCode(), "refresh token is empty");
         }
         return OAuth2TokenUtil.refreshToken(clientId, refreshToken, tokenEndpoint);
+    }
+
+    private static void preserveRefreshToken(IDaaSTokenResponse response, String previousRefreshToken) {
+        if (response == null) {
+            throw new CredentialException("EmptyRefreshTokenResponse", "Token endpoint returned an empty refresh response");
+        }
+        if (StringUtil.isBlank(response.getRefreshToken())) response.setRefreshToken(previousRefreshToken);
     }
 
     private IDaaSTokenResponse getTokenWithDeviceAuthorization() {

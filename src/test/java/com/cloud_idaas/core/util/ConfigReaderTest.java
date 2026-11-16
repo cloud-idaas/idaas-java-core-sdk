@@ -87,15 +87,19 @@ class ConfigReaderTest {
     // ==================== getConfigAsString 测试 ====================
 
     @Test
-    @DisplayName("getConfigAsString: 未配置路径时应抛出异常")
+    @DisplayName("getConfigAsString: 显式路径不存在时应抛出异常，不读用户默认配置")
     void getConfigAsString_WithoutConfigPath_ShouldThrowException() {
-        // 清除系统属性和环境变量
-        System.clearProperty(ConfigPathConstants.JVM_CONFIG_PATH_KEY);
-
-        // 当没有配置路径时，应该使用默认路径，如果默认路径也不存在则会抛出异常
-        assertThrows(ConfigException.class, () ->
-                ConfigReader.getConfigAsString()
-        );
+        String previous = System.getProperty(ConfigPathConstants.JVM_CONFIG_PATH_KEY);
+        try {
+            System.setProperty(ConfigPathConstants.JVM_CONFIG_PATH_KEY, tempDir.resolve("missing.json").toString());
+            assertThrows(ConfigException.class, ConfigReader::getConfigAsString);
+        } finally {
+            if (previous == null) {
+                System.clearProperty(ConfigPathConstants.JVM_CONFIG_PATH_KEY);
+            } else {
+                System.setProperty(ConfigPathConstants.JVM_CONFIG_PATH_KEY, previous);
+            }
+        }
     }
 
     // ==================== classpath 路径测试 ====================

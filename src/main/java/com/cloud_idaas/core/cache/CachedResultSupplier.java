@@ -35,6 +35,9 @@ public class CachedResultSupplier<T> implements Supplier<T> {
     // Current cached value
     private volatile RefreshResult<T> cachedValue;
 
+    // A value fetched inside its own prefetch window must not immediately trigger another fetch.
+    private volatile RefreshResult<T> prefetchHandledValue;
+
     // Value supplier, used to retrieve new values
     private final Supplier<RefreshResult<T>> valueSupplier;
 
@@ -73,7 +76,7 @@ public class CachedResultSupplier<T> implements Supplier<T> {
 
         // Check if cache has expired
         if (cacheIsStale(localCachedValue)) {
-            refreshCache();
+            refreshCache(localCachedValue);
             localCachedValue = cachedValue;
         }
         // Confirm
@@ -82,8 +85,27 @@ public class CachedResultSupplier<T> implements Supplier<T> {
         }
 
         // Check if prefetching is needed
-        if (shouldInitiateCachePrefetch(localCachedValue)) {
-            prefetchStrategy.prefetch(this::refreshCache);
+        if (!cacheIsStale(localCachedValue) && shouldInitiateCachePrefetch(localCachedValue)) {
+            RefreshResult<T> observedValue = localCachedValue;
+            prefetchStrategy.prefetch(() -> {
+                try {
+                    refreshCache(observedValue);
+                } catch (CacheException e) {
+                    // Prefetch is opportunistic. Recheck after IO, including any concurrent replacement.
+                    RefreshResult<T> current = cachedValue;
+                    if (cacheIsStale(current) || (current.getExpiresAt() != null
+                            && !clock.instant().isBefore(current.getExpiresAt()))) {
+                        throw e;
+                    }
+                }
+            });
+            localCachedValue = cachedValue;
+        }
+
+        // Synchronous prefetch can consume the remaining token lifetime.
+        if (staleValueBehavior == StaleValueBehavior.STRICT && localCachedValue.getExpiresAt() != null
+                && !clock.instant().isBefore(localCachedValue.getExpiresAt())) {
+            throw new CacheException(new IllegalStateException("Credential is expired"));
         }
 
         return localCachedValue.getValue();
@@ -99,7 +121,7 @@ public class CachedResultSupplier<T> implements Supplier<T> {
         if (refreshResult == null) {
             return true;
         }
-        return clock.instant().isAfter(refreshResult.getStaleTime());
+        return !clock.instant().isBefore(refreshResult.getStaleTime());
     }
 
     /**
@@ -109,7 +131,7 @@ public class CachedResultSupplier<T> implements Supplier<T> {
      * @return True if prefetching should be initiated, otherwise false
      */
     private boolean shouldInitiateCachePrefetch(RefreshResult<T> refreshResult) {
-        if (refreshResult == null) {
+        if (refreshResult == null || refreshResult == prefetchHandledValue) {
             return false;
         }
         Instant prefetchTime = refreshResult.getPrefetchTime();
@@ -119,7 +141,7 @@ public class CachedResultSupplier<T> implements Supplier<T> {
     /**
      * Refresh cache
      */
-    private void refreshCache() {
+    private void refreshCache(RefreshResult<T> observedValue) {
         boolean lockAcquired = false;
         try {
             // Try to acquire the lock, waiting up to specified time
@@ -130,16 +152,21 @@ public class CachedResultSupplier<T> implements Supplier<T> {
                 return;
             }
 
+            // Coalesce callers that observed the same value, but never skip a stale refresh.
+            if (cachedValue != observedValue && !cacheIsStale(cachedValue)) {
+                return;
+            }
             // Double-check if refresh is still needed
-            if (!cacheIsStale(cachedValue)) {
+            if (!cacheIsStale(cachedValue) && !shouldInitiateCachePrefetch(cachedValue)) {
                 return;
             }
 
             // Execute the actual refresh logic
+            Instant fetchStartedAt = clock.instant();
             RefreshResult<T> refreshedValue = valueSupplier.get();
             
             // Apply jitter
-            handleFetchedSuccess(refreshedValue);
+            handleFetchedSuccess(refreshedValue, fetchStartedAt);
         } catch (Exception e) {
             // Handle refresh failure
             handleFetchFailure(e);
@@ -154,11 +181,30 @@ public class CachedResultSupplier<T> implements Supplier<T> {
      * Handle the newly fetched value
      *
      * @param refreshedValue The newly fetched value
+     * @param fetchStartedAt Conservative start of relative credential validity
      */
-    private void handleFetchedSuccess(RefreshResult<T> refreshedValue) {
+    private void handleFetchedSuccess(RefreshResult<T> refreshedValue, Instant fetchStartedAt) {
         // Apply jitter to staleTime and prefetchTime
         Instant staleTime = refreshedValue.getStaleTime();
         Instant prefetchTime = refreshedValue.getPrefetchTime();
+        Instant expiry = refreshedValue.getExpiresAt();
+        if (refreshedValue.getValue() instanceof com.cloud_idaas.core.credential.IDaaSTokenResponse) {
+            com.cloud_idaas.core.credential.IDaaSTokenResponse token =
+                    (com.cloud_idaas.core.credential.IDaaSTokenResponse) refreshedValue.getValue();
+            if (token.getExpiresAt() > 0) {
+                expiry = earlier(expiry, Instant.ofEpochSecond(token.getExpiresAt()));
+            }
+            if (token.getExpiresIn() > 0) {
+                expiry = earlier(expiry, fetchStartedAt.plusSeconds(token.getExpiresIn()));
+            }
+        }
+
+        // Reject an unusable STRICT result before replacing either cache publication field.
+        // Prefetch callers can then retain a still-valid old value through the failure path.
+        if (staleValueBehavior == StaleValueBehavior.STRICT
+                && expiry != null && !clock.instant().isBefore(expiry)) {
+            throw new IllegalStateException("Fetched credential is expired");
+        }
 
         if (staleTime != null) {
             staleTime = jitterTime(staleTime);
@@ -167,9 +213,23 @@ public class CachedResultSupplier<T> implements Supplier<T> {
         if (prefetchTime != null) {
             prefetchTime = jitterTime(prefetchTime);
         }
+        if (expiry != null) {
+            if (staleTime == null || staleTime.isAfter(expiry)) {
+                staleTime = expiry;
+            }
+            if (prefetchTime != null && prefetchTime.isAfter(staleTime)) {
+                prefetchTime = staleTime;
+            }
+        }
 
         // Update cached value
-        cachedValue = new RefreshResult<>(refreshedValue.getValue(), staleTime, prefetchTime);
+        RefreshResult<T> fetched = new RefreshResult<>(refreshedValue.getValue(), staleTime, prefetchTime, expiry);
+        prefetchHandledValue = prefetchTime != null && !clock.instant().isBefore(prefetchTime) ? fetched : null;
+        cachedValue = fetched;
+    }
+
+    private static Instant earlier(Instant first, Instant second) {
+        return first == null || second.isBefore(first) ? second : first;
     }
 
     /**

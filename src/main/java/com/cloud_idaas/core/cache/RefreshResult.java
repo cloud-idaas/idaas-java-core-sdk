@@ -14,6 +14,7 @@ public final class RefreshResult<T> {
     private final T value;
     private final Instant staleTime;
     private final Instant prefetchTime;
+    private final Instant expiresAt;
 
     /**
      * Constructs a new RefreshResult instance
@@ -23,10 +24,18 @@ public final class RefreshResult<T> {
      * @param prefetchTime Prefetch time, after which prefetch operation will be triggered
      */
     public RefreshResult(T value, Instant staleTime, Instant prefetchTime) {
+        this(value, staleTime, prefetchTime, null);
+    }
+
+    RefreshResult(T value, Instant staleTime, Instant prefetchTime, Instant expiresAt) {
         this.value = value;
         this.staleTime = staleTime;
         this.prefetchTime = prefetchTime;
+        this.expiresAt = expiresAt;
     }
+
+    /** Hard expiration bound captured by the cache, independent of refresh jitter. */
+    Instant getExpiresAt() { return expiresAt; }
 
     /**
      * Gets the actual cached value
@@ -66,12 +75,13 @@ public final class RefreshResult<T> {
         RefreshResult<?> that = (RefreshResult<?>) o;
         return Objects.equals(value, that.value) &&
                 Objects.equals(staleTime, that.staleTime) &&
-                Objects.equals(prefetchTime, that.prefetchTime);
+                Objects.equals(prefetchTime, that.prefetchTime) &&
+                Objects.equals(expiresAt, that.expiresAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, staleTime, prefetchTime);
+        return Objects.hash(value, staleTime, prefetchTime, expiresAt);
     }
 
     @Override
@@ -80,6 +90,7 @@ public final class RefreshResult<T> {
                 .add("value=" + value)
                 .add("staleTime=" + staleTime)
                 .add("prefetchTime=" + prefetchTime)
+                .add("expiresAt=" + expiresAt)
                 .toString();
     }
 
@@ -91,6 +102,7 @@ public final class RefreshResult<T> {
         private final T value;
         private Instant staleTime;
         private Instant prefetchTime;
+        private Instant expiresAt;
 
         private RefreshResultBuilder(T  value) {
             this.value = value;
@@ -106,6 +118,12 @@ public final class RefreshResult<T> {
             return this;
         }
 
-        public RefreshResult<T> build() {return new RefreshResult<>(value, staleTime, prefetchTime);}
+        /** Sets the absolute expiration bound independently of refresh jitter. */
+        public RefreshResultBuilder<T> expiresAt(Instant expiresAt) {
+            this.expiresAt = expiresAt;
+            return this;
+        }
+
+        public RefreshResult<T> build() {return new RefreshResult<>(value, staleTime, prefetchTime, expiresAt);}
     }
 }

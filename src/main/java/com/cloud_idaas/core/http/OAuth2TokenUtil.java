@@ -20,7 +20,7 @@ public class OAuth2TokenUtil {
 
     private static final String SLOW_DOWN = "slow_down";
 
-    private static final HttpClient HTTP_CLIENT = HttpClientFactory.getDefaultHttpClient();
+    private static final HttpClient HTTP_CLIENT = request -> HttpClientFactory.getDefaultHttpClient().send(request);
 
     public static IDaaSTokenResponse getTokenWithClientSecretBasic(String clientId, String clientSecret,
                                                                    String tokenEndpoint, String scope) {

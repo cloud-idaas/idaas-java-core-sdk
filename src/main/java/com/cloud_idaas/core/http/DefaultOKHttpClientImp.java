@@ -63,7 +63,7 @@ public class DefaultOKHttpClientImp implements HttpClient{
             RequestBody requestBody = buildRequestBody(httpRequest);
             request = requestBuilder.url(httpRequest.getUrl()).put(requestBody).build();
         }
-        return executeRequest(request);
+        return executeRequest(request, httpRequest.isRedactErrorBody());
     }
 
     private void addHeaderToRequest(Request.Builder requestBuilder, HttpRequest httpRequest) {
@@ -100,12 +100,20 @@ public class DefaultOKHttpClientImp implements HttpClient{
         }
     }
 
-    private HttpResponse executeRequest(Request request) {
+    private HttpResponse executeRequest(Request request, boolean redactErrorBody) {
         try (Response response = okHttpClient.newCall(request).execute()) {
             final int responseCode = response.code();
             final String responseBody = Objects.requireNonNull(response.body()).string();
             if (response.isSuccessful()){
                 return new HttpResponse(responseCode, responseBody);
+            } else if (redactErrorBody) {
+                // Sensitive metadata error bodies are neither parsed, logged nor attached as causes.
+                String status = String.valueOf(responseCode);
+                String message = "HTTP request failed with status " + status;
+                if (responseCode < 500) {
+                    throw new ClientException(status, message);
+                }
+                throw new ServerException(status, message);
             } else if (responseCode >= 300 && responseCode < 400) {
                 String redirectLocation = response.header(HttpConstants.LOCATION);
                 String redirectMessage = redirectLocation != null ? HttpConstants.REDIRECT_TO + redirectLocation : null;

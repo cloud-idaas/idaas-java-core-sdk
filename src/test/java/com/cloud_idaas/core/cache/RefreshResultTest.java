@@ -16,6 +16,23 @@ class RefreshResultTest {
     private static final Instant TEST_STALE_TIME = Instant.now().plusSeconds(300);
     private static final Instant TEST_PREFETCH_TIME = Instant.now().plusSeconds(200);
 
+    @Test
+    void expirationParticipatesInValueEqualityAndDiagnostics() {
+        Instant expiry = TEST_STALE_TIME.plusSeconds(60);
+        RefreshResult<String> first = RefreshResult.builder(TEST_VALUE).staleTime(TEST_STALE_TIME)
+                .prefetchTime(TEST_PREFETCH_TIME).expiresAt(expiry).build();
+        RefreshResult<String> same = RefreshResult.builder(TEST_VALUE).staleTime(TEST_STALE_TIME)
+                .prefetchTime(TEST_PREFETCH_TIME).expiresAt(expiry).build();
+        RefreshResult<String> different = RefreshResult.builder(TEST_VALUE).staleTime(TEST_STALE_TIME)
+                .prefetchTime(TEST_PREFETCH_TIME).expiresAt(expiry.plusSeconds(1)).build();
+        assertEquals(first, same);
+        assertEquals(first.hashCode(), same.hashCode());
+        assertNotEquals(first, different);
+        assertTrue(first.toString().contains("expiresAt=" + expiry));
+        assertEquals(new RefreshResult<>(TEST_VALUE, TEST_STALE_TIME, TEST_PREFETCH_TIME),
+                RefreshResult.builder(TEST_VALUE).staleTime(TEST_STALE_TIME).prefetchTime(TEST_PREFETCH_TIME).build());
+    }
+
     // ==================== 构造函数测试 ====================
 
     @Test

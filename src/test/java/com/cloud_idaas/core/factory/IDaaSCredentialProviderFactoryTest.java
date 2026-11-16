@@ -94,12 +94,22 @@ class IDaaSCredentialProviderFactoryTest {
     // ==================== init() 无参方法测试 ====================
 
     @Test
-    @DisplayName("init(): 无参初始化方法在配置有效时应成功")
-    void init_NoArgs_WithValidConfigFile_ShouldSucceed() throws Exception {
-        // 由于无法模拟 ConfigReader.getConfigAsString()，
-        // 这个测试需要配置文件存在或会被跳过
-        // 这里测试初始化失败的情况
-        assertThrows(Exception.class, () -> IDaaSCredentialProviderFactory.init());
+    @DisplayName("init(): 显式配置文件缺失时应失败且不读取用户默认配置")
+    void init_NoArgs_WithMissingConfigFile_ShouldFail() throws Exception {
+        String key = com.cloud_idaas.core.domain.constants.ConfigPathConstants.JVM_CONFIG_PATH_KEY;
+        String previous = System.getProperty(key);
+        java.nio.file.Path directory = java.nio.file.Files.createTempDirectory("sdk-missing-config-");
+        try {
+            System.setProperty(key, directory.resolve("missing.json").toString());
+            assertThrows(ConfigException.class, IDaaSCredentialProviderFactory::init);
+        } finally {
+            if (previous == null) {
+                System.clearProperty(key);
+            } else {
+                System.setProperty(key, previous);
+            }
+            java.nio.file.Files.delete(directory);
+        }
     }
 
     @Test
@@ -196,12 +206,12 @@ class IDaaSCredentialProviderFactoryTest {
     }
 
     // ==================== init(String) 测试 ====================
-    
+
     @Test
     @DisplayName("init(String): 指定配置文件路径应正确读取和解析配置")
     void init_WithConfigPath_ShouldReadAndParseConfig(@TempDir Path tempDir) throws Exception {
         Path configFile = tempDir.resolve("client-config.json");
-        Files.write(configFile, ("{" 
+        Files.write(configFile, ("{"
                 + "\"idaasInstanceId\":\"path-instance-id\","
                 + "\"clientId\":\"path-client-id\","
                 + "\"scope\":\"test-audience|test-scope\","
@@ -209,13 +219,13 @@ class IDaaSCredentialProviderFactoryTest {
                 + "\"tokenEndpoint\":\"https://test.idaas.example.com/token\","
                 + "\"authnConfiguration\":{\"identityType\":\"CLIENT\",\"authnMethod\":\"CLIENT_SECRET_POST\",\"clientSecretEnvVarName\":\"TEST_SECRET_ENV\"}"
                 + "}").getBytes(StandardCharsets.UTF_8));
-    
+
         // init(String) will also trigger initCredentialProvider() which calls getCredential().
         // In a test environment without a running server this throws, so we use ConfigReader + init(config) instead.
         String content = ConfigReader.getConfigAsString(configFile.toString());
         IDaaSClientConfig config = JSONUtil.parseObject(content, IDaaSClientConfig.class);
         IDaaSCredentialProviderFactory.init(config);
-    
+
         assertEquals("path-client-id", IDaaSCredentialProviderFactory.getClientId());
         assertEquals("path-instance-id", IDaaSCredentialProviderFactory.getIDaasInstanceId());
     }
@@ -787,6 +797,25 @@ class IDaaSCredentialProviderFactoryTest {
 
     // ==================== 反射测试私有方法 ====================
 
+    @Test
+    @DisplayName("validateClientConfig: 验证基础配置")
+    void validateClientConfig_ValidConfig_ShouldNotThrow() throws Exception {
+        IDaaSClientConfig config = createValidTestConfig();
+
+        Method method = IDaaSCredentialProviderFactory.class.getDeclaredMethod("validateConfig", IDaaSClientConfig.class);
+        method.setAccessible(true);
+
+        // 由于工厂未初始化，直接调用私有方法验证
+        assertDoesNotThrow(() -> method.invoke(null, config));
+    }
+
+    @Test
+    @DisplayName("validateHttpConfig: 验证 HTTP 配置")
+    void validateHttpConfig_ValidConfig_ShouldNotThrow() throws Exception {
+        IDaaSClientConfig config = createValidTestConfig();
+
+        assertDoesNotThrow(() -> com.cloud_idaas.core.util.ValidatorUtil.validateHttpConfig(config.getHttpConfiguration()));
+    }
 
     @Test
     @DisplayName("initCredentialProvider: 未初始化时不应执行")
@@ -877,17 +906,15 @@ class IDaaSCredentialProviderFactoryTest {
     }
 
     @Test
-    @DisplayName("PKCS7 其他部署环境: 不应创建 DocumentProvider")
-    void pkcs7_OtherDeployEnvironment_ShouldNotCreateDocumentProvider() throws Exception {
+    @DisplayName("PKCS7 其他部署环境: 应在初始化时拒绝")
+    void pkcs7_OtherDeployEnvironment_ShouldRejectInitialization() throws Exception {
         IDaaSClientConfig config = createValidTestConfig();
         config.getAuthnConfiguration().setAuthnMethod(TokenAuthnMethod.PKCS7);
         config.getAuthnConfiguration().setApplicationFederatedCredentialName("test-fed");
         config.getAuthnConfiguration().setClientDeployEnvironment(ClientDeployEnvironmentEnum.COMMON);
 
-        IDaaSCredentialProviderFactory.init(config);
-
-        // 验证初始化成功
-        assertTrue(true);
+        ConfigException failure = assertThrows(ConfigException.class, () -> IDaaSCredentialProviderFactory.init(config));
+        assertEquals(ErrorCode.UNSUPPORTED_CLIENT_DEPLOY_ENVIRONMENT.getCode(), failure.getErrorCode());
     }
 
     // ==================== 空 HttpConfiguration 测试 ====================

@@ -19,7 +19,7 @@ public enum ClientDeployEnvironmentEnum {
 
     AWS_EC2,
 
-    AWS_ESK,
+    AWS_EKS,
 
     GOOGLE_VM,
 

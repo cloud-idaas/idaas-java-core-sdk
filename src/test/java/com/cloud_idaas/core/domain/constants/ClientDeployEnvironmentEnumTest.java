@@ -57,9 +57,9 @@ class ClientDeployEnvironmentEnumTest {
     }
 
     @Test
-    @DisplayName("枚举值: AWS_ESK 应存在")
-    void enumValue_AwsEsk_ShouldExist() {
-        assertNotNull(ClientDeployEnvironmentEnum.AWS_ESK);
+    @DisplayName("枚举值: AWS_EKS 应存在")
+    void enumValue_AwsEks_ShouldExist() {
+        assertNotNull(ClientDeployEnvironmentEnum.AWS_EKS);
     }
 
     @Test
@@ -83,10 +83,11 @@ class ClientDeployEnvironmentEnumTest {
     // ==================== values() 测试 ====================
 
     @Test
-    @DisplayName("values: 应返回 11 个枚举值")
+    @DisplayName("values: EKS 使用正确名称，其他环境保留原序号")
     void values_ShouldReturnElevenValues() {
         ClientDeployEnvironmentEnum[] values = ClientDeployEnvironmentEnum.values();
         assertEquals(11, values.length);
+        assertEquals(ClientDeployEnvironmentEnum.AWS_EKS, values[7]);
     }
 
     // ==================== valueOf() 测试 ====================

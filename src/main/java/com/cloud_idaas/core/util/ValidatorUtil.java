@@ -5,6 +5,7 @@ import com.cloud_idaas.core.config.IDaaSClientConfig;
 import com.cloud_idaas.core.config.IdentityAuthenticationConfiguration;
 import com.cloud_idaas.core.credential.IDaaSTokenResponse;
 import com.cloud_idaas.core.domain.constants.ErrorCode;
+import com.cloud_idaas.core.domain.constants.ClientDeployEnvironmentEnum;
 import com.cloud_idaas.core.domain.constants.HttpConstants;
 import com.cloud_idaas.core.exception.CacheException;
 import com.cloud_idaas.core.exception.ConfigException;
@@ -64,6 +65,12 @@ public class ValidatorUtil {
             validateConfigNotNull(authnConfiguration.getClientDeployEnvironment(), ErrorCode.CLIENT_DEPLOY_ENVIRONMENT_NOT_FOUND.getCode(),
                     "Client Deploy Environment not found."
             );
+            if (authnMethod == TokenAuthnMethod.PKCS7
+                    && authnConfiguration.getClientDeployEnvironment() != ClientDeployEnvironmentEnum.ALIBABA_CLOUD_ECS
+                    && authnConfiguration.getClientDeployEnvironment() != ClientDeployEnvironmentEnum.AWS_EC2) {
+                throw new ConfigException(ErrorCode.UNSUPPORTED_CLIENT_DEPLOY_ENVIRONMENT.getCode(),
+                        "Unsupported PKCS7 client deploy environment: " + authnConfiguration.getClientDeployEnvironment());
+            }
         } else if (TokenAuthnMethod.PCA == authnMethod) {
             validateConfigNotBlank(authnConfiguration.getApplicationFederatedCredentialName(), ErrorCode.APPLICATION_FEDERATED_CREDENTIAL_NAME_NOT_FOUND.getCode(),
                     "Application Federated Credential Name not found.");

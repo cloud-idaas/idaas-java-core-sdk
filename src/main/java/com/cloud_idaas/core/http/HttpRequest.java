@@ -20,6 +20,8 @@ public class HttpRequest implements Serializable {
 
     private ContentType contentType;
 
+    private transient boolean redactErrorBody;
+
     public HttpRequest() {
     }
 
@@ -30,6 +32,7 @@ public class HttpRequest implements Serializable {
         this.body = builder.body;
         this.formBody = builder.formBody;
         this.contentType = builder.contentType;
+        this.redactErrorBody = builder.redactErrorBody;
     }
 
     public HttpMethod getMethod() {
@@ -80,6 +83,11 @@ public class HttpRequest implements Serializable {
         this.contentType = contentType;
     }
 
+    /** Runtime-only policy: omit error bodies from default-client logs, messages and causes; not serialized. */
+    public boolean isRedactErrorBody() {
+        return redactErrorBody;
+    }
+
     public static final class Builder {
         private HttpMethod method;
         private String url;
@@ -87,6 +95,7 @@ public class HttpRequest implements Serializable {
         private String body;
         private Map<String, List<String>> formBody;
         private ContentType contentType;
+        private boolean redactErrorBody;
 
         public Builder httpMethod(HttpMethod method){
             this.method = method;
@@ -115,6 +124,12 @@ public class HttpRequest implements Serializable {
 
         public Builder contentType(ContentType contentType){
             this.contentType = contentType;
+            return this;
+        }
+
+        /** Opt into body-free error handling for sensitive metadata responses; defaults to false. */
+        public Builder redactErrorBody(boolean redactErrorBody) {
+            this.redactErrorBody = redactErrorBody;
             return this;
         }
 

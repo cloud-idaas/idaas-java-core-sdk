@@ -29,8 +29,29 @@ class AuthenticationConstantsTest {
     @Test
     @DisplayName("ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV 应正确")
     void alibabaCloudAckOidcTokenPathEnv_ShouldBeCorrect() {
-        assertEquals("ALIBABA_CLOUD_OIDC_TOKEN_FILE", 
+        assertEquals("ALIBABA_CLOUD_OIDC_TOKEN_FILE",
                 AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV);
+    }
+
+    @Test
+    @DisplayName("ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH 应正确")
+    void alibabaCloudAckOidcTokenDefaultPath_ShouldBeCorrect() {
+        assertEquals("/var/run/secrets/ack.alibabacloud.com/rrsa-tokens/token",
+                AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH);
+    }
+
+    @Test
+    @DisplayName("AWS_EKS_OIDC_TOKEN_PATH_ENV 应正确")
+    void awsEksOidcTokenPathEnv_ShouldBeCorrect() {
+        assertEquals("AWS_WEB_IDENTITY_TOKEN_FILE",
+                AuthenticationConstants.AWS_EKS_OIDC_TOKEN_PATH_ENV);
+    }
+
+    @Test
+    @DisplayName("AWS_EKS_OIDC_TOKEN_DEFAULT_PATH 应正确")
+    void awsEksOidcTokenDefaultPath_ShouldBeCorrect() {
+        assertEquals("/var/run/secrets/eks.amazonaws.com/serviceaccount/token",
+                AuthenticationConstants.AWS_EKS_OIDC_TOKEN_DEFAULT_PATH);
     }
 
     @Test
@@ -55,6 +76,9 @@ class AuthenticationConstantsTest {
         assertNotNull(AuthenticationConstants.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH);
         assertNotNull(AuthenticationConstants.ALIBABA_CLOUD_ECS_METADATA_SERVICE_URL);
         assertNotNull(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV);
+        assertNotNull(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH);
+        assertNotNull(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_PATH_ENV);
+        assertNotNull(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_DEFAULT_PATH);
         assertNotNull(AuthenticationConstants.DEFAULT_CLIENT_ID_ENVIRONMENT_VARIABLE_NAME);
         assertNotNull(AuthenticationConstants.DEFAULT_CLIENT_SECRET_ENVIRONMENT_VARIABLE_NAME);
     }
@@ -65,6 +89,9 @@ class AuthenticationConstantsTest {
         assertFalse(AuthenticationConstants.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH.isEmpty());
         assertFalse(AuthenticationConstants.ALIBABA_CLOUD_ECS_METADATA_SERVICE_URL.isEmpty());
         assertFalse(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV.isEmpty());
+        assertFalse(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH.isEmpty());
+        assertFalse(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_PATH_ENV.isEmpty());
+        assertFalse(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_DEFAULT_PATH.isEmpty());
         assertFalse(AuthenticationConstants.DEFAULT_CLIENT_ID_ENVIRONMENT_VARIABLE_NAME.isEmpty());
         assertFalse(AuthenticationConstants.DEFAULT_CLIENT_SECRET_ENVIRONMENT_VARIABLE_NAME.isEmpty());
     }
@@ -72,9 +99,11 @@ class AuthenticationConstantsTest {
     // ==================== 特定格式验证测试 ====================
 
     @Test
-    @DisplayName("KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH 应为有效路径格式")
-    void kubernetesTokenPath_ShouldBeValidPathFormat() {
+    @DisplayName("Token 文件路径应为有效路径格式")
+    void tokenPaths_ShouldBeValidPathFormat() {
         assertTrue(AuthenticationConstants.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH.startsWith("/"));
+        assertTrue(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_DEFAULT_PATH.startsWith("/"));
+        assertTrue(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_DEFAULT_PATH.startsWith("/"));
     }
 
     @Test
@@ -87,6 +116,7 @@ class AuthenticationConstantsTest {
     @DisplayName("环境变量名应为大写字母和下划线格式")
     void environmentVariableNames_ShouldBeUpperCaseWithUnderscores() {
         assertTrue(AuthenticationConstants.ALIBABA_CLOUD_ACK_OIDC_TOKEN_PATH_ENV.matches("^[A-Z_]+$"));
+        assertTrue(AuthenticationConstants.AWS_EKS_OIDC_TOKEN_PATH_ENV.matches("^[A-Z_]+$"));
         assertTrue(AuthenticationConstants.DEFAULT_CLIENT_ID_ENVIRONMENT_VARIABLE_NAME.matches("^[A-Z_]+$"));
         assertTrue(AuthenticationConstants.DEFAULT_CLIENT_SECRET_ENVIRONMENT_VARIABLE_NAME.matches("^[A-Z_]+$"));
     }
